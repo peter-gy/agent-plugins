@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Plugins"
+  short_description: "Ship agent components with Python packages"
+  default_prompt: "Use $agent-plugins to ship agent skills and MCP configuration with this Python package."

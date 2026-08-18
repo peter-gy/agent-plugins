@@ -1,0 +1,73 @@
+[project]
+name = "agent-plugins"
+version = "0.1.0"
+description = "Ship Agent Plugins with Python packages and inspect their installed files"
+readme = "README.md"
+authors = [
+    { name = "Péter Ferenc Gyarmati", email = "dev.petergy@gmail.com" }
+]
+requires-python = ">=3.10,<3.15"
+dependencies = [
+    "tomli==2.3.1; python_version < '3.11'",
+]
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Source = "https://github.com/peter-gy/agent-plugins"
+
+[project.scripts]
+agent-plugins = "agent_plugins._cli:main"
+
+[build-system]
+requires = [
+    "tomli==2.3.1; python_version < '3.11'",
+    "uv_build==0.12.2",
+]
+build-backend = "agent_plugins.build.uv_build"
+backend-path = ["src"]
+
+[tool.agent-plugins]
+root = "."
+
+[dependency-groups]
+dev = [
+    "editables>=0.5",
+    "hatchling>=1.31.0",
+    "pyrefly>=1.2.0",
+    "pytest>=9.1.1",
+    "ruff>=0.16.1",
+    "tomli>=2.3.1",
+    "ty>=0.0.69",
+    "uv-build>=0.12.2",
+]
+
+[tool.pytest.ini_options]
+addopts = ["--strict-config", "--strict-markers"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "PTH", "RUF", "SIM", "UP"]
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+[tool.ty.environment]
+python-version = "3.10"
+
+[tool.ty.terminal]
+error-on-warning = true
+
+[tool.pyrefly]
+project-includes = ["src/**/*.py", "tests/**/*.py"]
+python-version = "3.10"
+search-path = ["src", "tests"]
