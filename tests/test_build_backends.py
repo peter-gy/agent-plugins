@@ -5,6 +5,7 @@ import csv
 import hashlib
 import importlib
 import json
+import stat
 import tarfile
 import zipfile
 from pathlib import Path
@@ -28,13 +29,16 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     project, plugin_root = _project(tmp_path, backend_name)
+    executable_mode = stat.S_IFREG | stat.S_IMODE(
+        (plugin_root / "bin/server.py").stat().st_mode
+    )
     backend = _backend(backend_name)
     monkeypatch.chdir(project)
 
     wheel_directory = tmp_path / "wheel"
     wheel_directory.mkdir()
     wheel = wheel_directory / backend.build_wheel(str(wheel_directory))
-    direct_payload = _assert_regular_wheel(wheel)
+    direct_payload = _assert_regular_wheel(wheel, executable_mode=executable_mode)
 
     sdist_directory = tmp_path / "sdist"
     sdist_directory.mkdir()
@@ -50,7 +54,10 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
     rebuilt_directory = tmp_path / "rebuilt"
     rebuilt_directory.mkdir()
     rebuilt = rebuilt_directory / backend.build_wheel(str(rebuilt_directory))
-    assert _assert_regular_wheel(rebuilt) == direct_payload
+    assert (
+        _assert_regular_wheel(rebuilt, executable_mode=executable_mode)
+        == direct_payload
+    )
 
     monkeypatch.chdir(project)
     editable_directory = tmp_path / "editable"
@@ -76,7 +83,7 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
     _assert_record(editable)
 
 
-def _assert_regular_wheel(wheel: Path) -> dict[str, bytes]:
+def _assert_regular_wheel(wheel: Path, *, executable_mode: int) -> dict[str, bytes]:
     prefix = "demo_provider-1.2.3.agent-plugin"
     expected = {
         "bin/server.py",
@@ -91,8 +98,8 @@ def _assert_regular_wheel(wheel: Path) -> dict[str, bytes]:
         metadata = archive.read(f"{dist_info}/METADATA").decode()
         assert "Requires-Dist: agent-plugins" not in metadata
         assert marker == {"root": prefix, "files": sorted(expected)}
-        assert (
-            archive.getinfo(f"{prefix}/bin/server.py").external_attr >> 16 == 0o100755
+        assert archive.getinfo(f"{prefix}/bin/server.py").external_attr >> 16 == (
+            executable_mode
         )
         payload = {
             name.removeprefix(f"{prefix}/"): archive.read(name)

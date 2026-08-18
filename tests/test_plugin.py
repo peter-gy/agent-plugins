@@ -141,9 +141,8 @@ def _plugin_root(tmp_path: Path) -> Path:
     references.mkdir(parents=True)
     (root / "plugin.json").write_text('{"name":"demo"}\n', encoding="utf-8")
     (root / "mcp.json").write_text('{"mcpServers":{}}\n', encoding="utf-8")
-    (skill / "SKILL.md").write_text(
-        "---\nname: demo\ndescription: Demonstrate the package\n---\n\n# Demo\n",
-        encoding="utf-8",
+    (skill / "SKILL.md").write_bytes(
+        b"---\nname: demo\ndescription: Demonstrate the package\n---\n\n# Demo\n"
     )
     (references / "guide&notes.md").write_text("# Guide\n", encoding="utf-8")
     return root
