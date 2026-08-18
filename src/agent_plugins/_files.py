@@ -26,7 +26,7 @@ class FileInventory:
         kind: str,
     ) -> FileInventory:
         """Discover every file below a directory."""
-        root = _resolve_root(path, required=required, kind=kind)
+        root = _resolve_root(path, kind=kind)
         names = (
             candidate.relative_to(root).as_posix()
             for candidate in root.rglob("*")
@@ -47,7 +47,7 @@ class FileInventory:
         kind: str,
     ) -> FileInventory:
         """Validate selected relative files below a directory."""
-        root = _resolve_root(path, required=required, kind=kind)
+        root = _resolve_root(path, kind=kind)
         return cls(
             root=root,
             names=_validate_names(root, names, required=required, kind=kind),
@@ -85,7 +85,6 @@ def path_sort_key(path: PurePosixPath) -> tuple[str, str]:
 def _resolve_root(
     path: str | os.PathLike[str],
     *,
-    required: str,
     kind: str,
 ) -> Path:
     candidate = Path(path)
@@ -95,7 +94,7 @@ def _resolve_root(
         raise AgentPluginError(
             f"{kind} root cannot be resolved: {candidate}"
         ) from error
-    if not root.is_dir() or not (root / required).is_file():
+    if not root.is_dir():
         raise AgentPluginError(f"{kind} root is invalid: {root}")
     return root
 

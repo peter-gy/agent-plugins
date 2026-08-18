@@ -114,9 +114,17 @@ def test_plugin_default_tree_limits_file_count(tmp_path: Path) -> None:
     assert ap.Plugin(root).tree().endswith("... 1 more file")
 
 
-def test_plugin_reports_an_invalid_root(tmp_path: Path) -> None:
-    with pytest.raises(ap.AgentPluginError, match="is invalid"):
+def test_plugin_requires_a_manifest(tmp_path: Path) -> None:
+    with pytest.raises(ap.AgentPluginError, match=r"must include plugin\.json"):
         ap.Plugin(tmp_path)
+
+
+def test_plugin_reports_a_file_as_an_invalid_root(tmp_path: Path) -> None:
+    path = tmp_path / "plugin.json"
+    path.write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(ap.AgentPluginError, match="root is invalid"):
+        ap.Plugin(path)
 
 
 def test_plugin_mcp_is_none_when_configuration_is_absent(tmp_path: Path) -> None:
