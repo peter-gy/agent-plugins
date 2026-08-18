@@ -36,6 +36,9 @@ backend-path = ["src"]
 [tool.agent-plugins]
 root = "."
 
+[tool.uv]
+exclude-newer = "3 days"
+
 [dependency-groups]
 dev = [
     "editables>=0.5",
