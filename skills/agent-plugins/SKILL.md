@@ -51,7 +51,7 @@ Find the Python package's `pyproject.toml` and set
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.0", "uv_build==0.12.2"]
+requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
 build-backend = "agent_plugins.build.uv_build"
 
 [tool.agent-plugins]
@@ -62,7 +62,7 @@ For Hatchling:
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.0", "hatchling==1.31.0"]
+requires = ["agent-plugins==0.1.1", "hatchling==1.31.0"]
 build-backend = "agent_plugins.build.hatchling"
 
 [tool.agent-plugins]
@@ -102,7 +102,7 @@ code needs to locate or inspect Agent Plugins:
 
 ```toml
 [project]
-dependencies = ["agent-plugins==0.1.0"]
+dependencies = ["agent-plugins==0.1.1"]
 ```
 
 Locate a plugin with the Python package name used by pip:

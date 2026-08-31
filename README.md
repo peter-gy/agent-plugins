@@ -43,7 +43,7 @@ Configure the Python package to wrap `uv_build`:
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.0", "uv_build==0.12.2"]
+requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
 build-backend = "agent_plugins.build.uv_build"
 
 [tool.agent-plugins]
@@ -57,7 +57,7 @@ Build, install, and locate the packaged plugin:
 
 ```console
 uv build packages/python --out-dir dist
-python -m pip install "agent-plugins==0.1.0" dist/my_package-*.whl
+python -m pip install "agent-plugins==0.1.1" dist/my_package-*.whl
 agent-plugins locate my-package
 ```
 
@@ -76,7 +76,7 @@ Keep the plugin settings and select the Hatchling adapter:
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.0", "hatchling==1.31.0"]
+requires = ["agent-plugins==0.1.1", "hatchling==1.31.0"]
 build-backend = "agent_plugins.build.hatchling"
 
 [tool.agent-plugins]
@@ -102,7 +102,7 @@ inspection API:
 
 ```toml
 [project]
-dependencies = ["agent-plugins==0.1.0"]
+dependencies = ["agent-plugins==0.1.1"]
 ```
 
 ```python
