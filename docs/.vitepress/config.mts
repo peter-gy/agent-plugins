@@ -1,4 +1,5 @@
 import { defineConfig, type HeadConfig, type Plugin } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 const defaultSiteUrl = 'https://peter-gy.github.io/agent-plugins/'
 
@@ -15,10 +16,15 @@ function normalizeSiteUrl(value: string | undefined): URL {
 const basePath = normalizeBasePath(process.env.BASE_PATH)
 const base = basePath ? `${basePath}/` : '/'
 const siteUrl = normalizeSiteUrl(process.env.SITE_URL)
+const llmsDomain = basePath ? siteUrl.origin : siteUrl.href.replace(/\/$/, '')
 const ogImage = new URL('og.png', siteUrl).href
 const publicPath = (path: string): string =>
   `${basePath}/${path.replace(/^\/+/, '')}`
 const devPort = process.env.PORT ? Number(process.env.PORT) : undefined
+const llmsPlugins = llmstxt({
+  domain: llmsDomain,
+  excludeIndexPage: false
+}) as [Plugin, Plugin]
 const robotsPlugin: Plugin = {
   name: 'agent-plugins-robots',
   apply: 'build',
@@ -41,7 +47,7 @@ function pageUrl(relativePath: string): string {
 export default defineConfig({
   title: 'agent-plugins',
   description:
-    'Ship agent instructions and integrations with Python packages.',
+    'Ship Agent Plugins with Python packages as one synchronized release.',
   base,
   cleanUrls: true,
   lastUpdated: true,
@@ -189,7 +195,7 @@ export default defineConfig({
       ? `${pageData.title} | agent-plugins`
       : 'agent-plugins'
     const description = pageData.description ||
-      'Ship agent instructions and integrations with Python packages.'
+      'Ship Agent Plugins with Python packages as one synchronized release.'
 
     ;((pageData.frontmatter.head ??= []) as HeadConfig[]).push(
       ['link', { rel: 'canonical', href: canonical }],
@@ -225,7 +231,7 @@ export default defineConfig({
     )
   },
   vite: {
-    plugins: [robotsPlugin],
+    plugins: [...llmsPlugins, robotsPlugin],
     server: {
       host: '127.0.0.1',
       port: devPort,

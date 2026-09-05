@@ -5,7 +5,7 @@ description: Package an Agent Skill in a wheel and locate the installed Agent Pl
 
 # Package and locate your first Agent Plugin
 
-Create a Python distribution that carries one Agent Skill. The completed flow builds a wheel, installs it, and prints the installed plugin root.
+Create a Python distribution that carries an Agent Plugin beside the library it extends. This minimal plugin contains one Agent Skill. The completed flow builds one wheel, installs it, and locates the plugin from that installed distribution.
 
 ## Prerequisites
 
@@ -114,6 +114,8 @@ The command prints an absolute plugin root inside uv's temporary environment, si
 ```text
 /path/to/site-packages/my_project-0.1.0.agent-plugin
 ```
+
+The `.agent-plugin` directory and the importable `my_project` package share the wheel's distribution version. A compatible client can discover the plugin immediately from the installed metadata.
 
 ## Inspect from application code
 
