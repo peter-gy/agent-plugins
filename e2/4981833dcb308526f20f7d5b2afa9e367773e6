@@ -1,0 +1,24 @@
+README.md
+  s_83c3cd5e13e83e::t_f35227fd0e1dff 28
+  s_83c3cd5e13e83e::t_b456c540c3e2bc 26,30,160
+docs/guide/what-is-an-agent-plugin.md
+  s_83c3cd5e13e83e::t_b456c540c3e2bc 8,10,12,78
+docs/index.md
+  s_83c3cd5e13e83e::t_b456c540c3e2bc 8,26,29-32,35-38,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "e24981833dcb308526f20f7d5b2afa9e367773e6",
+  "prompts": {},
+  "sessions": {
+    "s_83c3cd5e13e83e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0729c-2b88-7f10-96b0-66709a99f4eb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
