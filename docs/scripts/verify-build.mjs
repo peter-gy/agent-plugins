@@ -6,6 +6,9 @@ const packageRoot = dirname(fileURLToPath(new URL('../package.json', import.meta
 const outputRoot = join(packageRoot, '.vitepress', 'dist')
 const baseName = process.env.BASE_PATH?.trim().replace(/^\/+|\/+$/g, '')
 const basePath = baseName ? `/${baseName}` : ''
+const deployedSiteUrl = new URL(
+  `${(process.env.SITE_URL?.trim() || 'https://peter-gy.github.io/agent-plugins').replace(/\/+$/, '')}/`
+)
 const publicPath = (path) => `${basePath}/${path.replace(/^\/+/, '')}`
 const failures = []
 
@@ -26,6 +29,11 @@ check(await isFile(indexPath), 'Missing built home page')
 check(await isFile(join(outputRoot, 'favicon.svg')), 'Missing built favicon')
 check(await isFile(join(outputRoot, 'og.png')), 'Missing built Open Graph image')
 check(await isFile(join(outputRoot, 'robots.txt')), 'Missing built robots file')
+check(await isFile(join(outputRoot, 'llms.txt')), 'Missing generated llms.txt')
+check(
+  await isFile(join(outputRoot, 'llms-full.txt')),
+  'Missing generated llms-full.txt'
+)
 
 if (await isFile(indexPath)) {
   const index = await readFile(indexPath, 'utf8')
@@ -75,6 +83,31 @@ if (await isFile(indexPath)) {
       )
     }
   }
+}
+
+const llmsPath = join(outputRoot, 'llms.txt')
+const llmsFullPath = join(outputRoot, 'llms-full.txt')
+if (await isFile(llmsPath)) {
+  const llms = await readFile(llmsPath, 'utf8')
+  check(
+    llms.includes(`${deployedSiteUrl.href}guide/getting-started.md`),
+    'llms.txt is missing the getting-started Markdown URL'
+  )
+  check(
+    llms.includes(`${deployedSiteUrl.href}reference/python-api.md`),
+    'llms.txt is missing the Python API Markdown URL'
+  )
+}
+if (await isFile(llmsFullPath)) {
+  const llmsFull = await readFile(llmsFullPath, 'utf8')
+  check(
+    llmsFull.includes(`url: ${deployedSiteUrl.href}`),
+    'llms-full.txt is missing canonical page URLs'
+  )
+  check(
+    llmsFull.includes('# Python API reference'),
+    'llms-full.txt is missing the Python API content'
+  )
 }
 
 if (failures.length > 0) {

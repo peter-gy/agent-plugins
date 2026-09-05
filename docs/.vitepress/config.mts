@@ -1,4 +1,5 @@
 import { defineConfig, type HeadConfig, type Plugin } from 'vitepress'
+import llmstxt from 'vitepress-plugin-llms'
 
 const defaultSiteUrl = 'https://peter-gy.github.io/agent-plugins/'
 
@@ -15,10 +16,15 @@ function normalizeSiteUrl(value: string | undefined): URL {
 const basePath = normalizeBasePath(process.env.BASE_PATH)
 const base = basePath ? `${basePath}/` : '/'
 const siteUrl = normalizeSiteUrl(process.env.SITE_URL)
+const llmsDomain = basePath ? siteUrl.origin : siteUrl.href.replace(/\/$/, '')
 const ogImage = new URL('og.png', siteUrl).href
 const publicPath = (path: string): string =>
   `${basePath}/${path.replace(/^\/+/, '')}`
 const devPort = process.env.PORT ? Number(process.env.PORT) : undefined
+const llmsPlugins = llmstxt({
+  domain: llmsDomain,
+  excludeIndexPage: false
+}) as [Plugin, Plugin]
 const robotsPlugin: Plugin = {
   name: 'agent-plugins-robots',
   apply: 'build',
@@ -41,7 +47,7 @@ function pageUrl(relativePath: string): string {
 export default defineConfig({
   title: 'agent-plugins',
   description:
-    'Ship agent instructions and integrations with Python packages.',
+    'Keep Python libraries and their Agent Skills synchronized in one installable release.',
   base,
   cleanUrls: true,
   lastUpdated: true,
@@ -189,7 +195,7 @@ export default defineConfig({
       ? `${pageData.title} | agent-plugins`
       : 'agent-plugins'
     const description = pageData.description ||
-      'Ship agent instructions and integrations with Python packages.'
+      'Keep Python libraries and their Agent Skills synchronized in one installable release.'
 
     ;((pageData.frontmatter.head ??= []) as HeadConfig[]).push(
       ['link', { rel: 'canonical', href: canonical }],
@@ -208,7 +214,7 @@ export default defineConfig({
         'meta',
         {
           property: 'og:image:alt',
-          content: 'Ship Agent Plugins with Python packages.'
+          content: 'Package Python libraries and their Agent Skills as one versioned distribution.'
         }
       ],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
@@ -219,13 +225,13 @@ export default defineConfig({
         'meta',
         {
           name: 'twitter:image:alt',
-          content: 'Ship Agent Plugins with Python packages.'
+          content: 'Package Python libraries and their Agent Skills as one versioned distribution.'
         }
       ]
     )
   },
   vite: {
-    plugins: [robotsPlugin],
+    plugins: [...llmsPlugins, robotsPlugin],
     server: {
       host: '127.0.0.1',
       port: devPort,

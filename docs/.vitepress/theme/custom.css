@@ -77,78 +77,56 @@
   letter-spacing: -0.015em;
 }
 
-.vp-doc ol.lifecycle {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0;
-  margin: 28px 0 36px;
-  padding: 0;
-  list-style: none;
-  padding-left: 0;
-  counter-reset: lifecycle;
-  border-top: 1px solid var(--vp-c-divider);
-  border-bottom: 1px solid var(--vp-c-divider);
+.VPFeature .icon {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg);
+  color: var(--vp-c-brand-1);
 }
 
-.vp-doc ol.lifecycle > li {
-  position: relative;
-  min-height: 132px;
-  padding: 20px 18px 18px;
-  counter-increment: lifecycle;
-  margin-top: 0;
-}
-
-.vp-doc ol.lifecycle > li + li {
-  border-left: 1px solid var(--vp-c-divider);
-}
-
-.vp-doc ol.lifecycle > li::before {
-  content: "0" counter(lifecycle);
-  display: block;
-  margin-bottom: 24px;
-  color: var(--vp-c-text-3);
-  font-family: var(--vp-font-family-mono);
-  font-size: 12px;
-}
-
-.vp-doc ol.lifecycle strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-.vp-doc ol.lifecycle span {
-  display: block;
-  color: var(--vp-c-text-2);
-  font-size: 13px;
-  line-height: 1.45;
+.VPFeature .icon svg {
+  width: 23px;
+  height: 23px;
 }
 
 .identity-table code {
   white-space: nowrap;
 }
 
-.home-install {
-  margin: 0 auto 64px;
-  max-width: 760px;
+.vp-doc .mermaid-container {
+  --mermaid-control-bg: var(--vp-c-bg);
+  --mermaid-control-border: var(--vp-c-divider);
+  --mermaid-control-radius: 6px;
+  --mermaid-control-shadow: none;
+  --mermaid-control-text: var(--vp-c-text-1);
+  min-height: 18rem;
+  max-height: 32rem;
+  margin: 28px 0 36px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  background: var(--vp-c-bg-alt);
 }
 
-.home-install h2 {
-  border-top: 0;
+.vp-doc .mermaid-container .diagram-wrapper {
+  padding: 28px;
 }
 
-@media (max-width: 900px) {
-  .vp-doc ol.lifecycle {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.vp-doc .diagram-lifecycle .mermaid-container {
+  min-height: 30rem;
+}
 
-  .vp-doc ol.lifecycle > li:nth-child(odd) {
-    border-left: 0;
-  }
+.vp-doc .diagram-compact {
+  max-width: 520px;
+}
 
-  .vp-doc ol.lifecycle > li:nth-child(n + 3) {
-    border-top: 1px solid var(--vp-c-divider);
-  }
+.vp-doc .diagram-compact .mermaid-container {
+  min-height: 20rem;
+}
+
+.vp-doc .diagram-compact .controls {
+  display: none;
 }
 
 @media (max-width: 640px) {
@@ -157,18 +135,16 @@
     max-height: 170px;
   }
 
-  .vp-doc ol.lifecycle {
-    grid-template-columns: 1fr;
+  .vp-doc .mermaid-container {
+    min-height: 14rem;
+    margin: 24px 0 30px;
   }
 
-  .vp-doc ol.lifecycle > li,
-  .vp-doc ol.lifecycle > li + li {
-    min-height: 0;
-    border-top: 1px solid var(--vp-c-divider);
-    border-left: 0;
+  .vp-doc .mermaid-container .diagram-wrapper {
+    padding: 18px;
   }
 
-  .vp-doc ol.lifecycle > li:first-child {
-    border-top: 0;
+  .vp-doc .diagram-lifecycle .mermaid-container {
+    min-height: 24rem;
   }
 }

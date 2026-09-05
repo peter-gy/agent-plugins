@@ -5,7 +5,9 @@ description: Follow Agent Plugin files through build planning, wheels, source di
 
 # How packaging works
 
-The build-backend adapter asks the configured Python backend to create an artifact, then augments that artifact with Agent Plugin metadata and files.
+The built distribution is one release boundary for library code and agent instructions. The build-backend adapter asks the configured Python backend to create an artifact, then augments that artifact with Agent Plugin metadata and files selected from the same source revision.
+
+Run library tests and evaluate the skills against that artifact before publishing it. Installing or rolling back one distribution version moves the packaged code and Agent Skills together.
 
 A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) is the archive installed into a Python environment. A [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/), or sdist, carries source files that a build frontend can turn into a wheel.
 

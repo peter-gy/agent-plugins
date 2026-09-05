@@ -9,11 +9,15 @@ description: Handle AgentPluginError, ValidationError, and non-fatal ValidationI
 
 ## Error hierarchy
 
-```text
-Exception
-└── AgentPluginError
-    └── ValidationError
+<div class="diagram-compact">
+
+```mermaid
+classDiagram
+    Exception <|-- AgentPluginError
+    AgentPluginError <|-- ValidationError
 ```
+
+</div>
 
 `AgentPluginError` covers missing distributions, markers, roots, required files, unsafe selected paths, build-plan failures, and archive failures.
 

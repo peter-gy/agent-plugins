@@ -1,9 +1,11 @@
 ---
 title: What is an Agent Plugin?
-description: Learn how Agent Plugin files move from an authored directory into an installed Python distribution.
+description: Keep a Python library and the agent instructions written for it in one versioned distribution.
 ---
 
 # What is an Agent Plugin?
+
+An Agent Skill teaches an agent how to use a library. When the library and skill follow separate installation paths, their versions can diverge. `agent-plugins` puts them in one Python distribution, so installing or rolling back that distribution moves the code and instructions together.
 
 An **agent client** is an application that loads agent instructions and integrations. An [Agent Plugin](https://agent-plugins.org/) is a portable directory that groups those files for one software project. The directory can contain [Agent Skills](https://agentskills.io/specification), [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) server configuration, and [client extension files](/integrations/client-extensions).
 
@@ -11,33 +13,27 @@ An **agent client** is an application that loads agent instructions and integrat
 
 A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) is an installable Python archive. A [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/) carries source files for a build frontend to turn into a wheel.
 
+## One release boundary
+
+The built distribution captures the library code and selected Agent Plugin files from the same source revision. Run library tests and evaluate the skill against that build, then publish one distribution version. Installing another version replaces both packaged surfaces together.
+
+For users and agents, install the Python distribution once. The Agent Plugin is immediately available for compatible clients to discover. A code-mode agent can call `agent_plugins.locate()` and read the same packaged `SKILL.md`, references, scripts, and assets through native Python paths.
+
 ## The lifecycle
 
-```text
-authored plugin directory
-          │
-          ▼
-      build plan
-          │
-          ├── regular wheel ──► packaged files + marker ─────────┐
-          ├── source distribution ──► staged files               │
-          │                              │                        │
-          │                              ▼                        │
-          │                       rebuilt wheel + marker ─────────┤
-          └── editable wheel ──► authored-root pointer + marker ─┤
-                                                                  │
-                                                                  ▼
-                                                      install distribution
-                                                                  │
-                                                                  ▼
-                                                     marker-based discovery
-                                                                  │
-                                                                  ▼
-                                                    Plugin handle + inventory
-                                                                  │
-                                                                  ▼
-                                               lazy manifest, skill, MCP access
+<div class="diagram-lifecycle">
+
+```mermaid
+flowchart TD
+    author[Python project<br/>Library code and Agent Plugin directory] --> plan[Build plan]
+    plan --> modes[Regular wheel<br/>Source distribution<br/>Editable wheel]
+    modes --> install[Installed library, Agent Plugin, and marker]
+    install --> discovery[Marker-based discovery]
+    discovery --> handle[Plugin handle and file inventory]
+    handle --> documents[Lazy manifest, skill, and MCP access]
 ```
+
+</div>
 
 The **authored plugin directory** is the directory you maintain. Its root contains `plugin.json`.
 
