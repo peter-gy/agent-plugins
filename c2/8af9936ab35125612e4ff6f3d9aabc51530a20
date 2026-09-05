@@ -1,0 +1,135 @@
+docs/guide/getting-started.md
+  s_a3a123d5e3051c::t_d313c2c254df77 103
+  s_a3a123d5e3051c::t_688e22c5621fda 75,78,106-109,112,114-115,118,120-124,127
+  s_a3a123d5e3051c::t_6571a004e433fd 10-14
+  s_a3a123d5e3051c::t_f4835594839161 1-9,15-74,76-77,79-102,104-105,110-111,113,116-117,119,125-126,128-143
+pyproject.toml
+  s_a3a123d5e3051c::t_ac6d9160095681 25-26
+docs/guide/build-backends.md
+  s_a3a123d5e3051c::t_f4835594839161 1-7,9-72
+  s_a3a123d5e3051c::t_f73283d498817a 8
+docs/integrations/client-extensions.md
+  s_a3a123d5e3051c::t_f49d59e7bccb2b 1-52
+docs/guide/editable-installs.md
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 3,26,30,40
+  s_a3a123d5e3051c::t_f4835594839161 1-2,4-25,27-29,31-39,41-53
+docs/package.json
+  s_a3a123d5e3051c::t_90e73290a69857 21
+  s_a3a123d5e3051c::t_477d6e6729513c 6-8,10-12,14-15,19,22-25
+  s_a3a123d5e3051c::t_a0820ceafa0237 18
+  s_a3a123d5e3051c::t_da457a75983a15 1-5,9,16-17,26-27
+  s_a3a123d5e3051c::t_f3100dd15c7ffc 13,20
+.github/workflows/docs.yml
+  s_a3a123d5e3051c::t_a50c9fa852c7cc 58,70,76
+  s_a3a123d5e3051c::t_f3100dd15c7ffc 1-26,30-56,62-63,67-69,71-75,77-89
+  s_a3a123d5e3051c::t_ec5935574dd260 29,57,59-61,64-66
+  s_a3a123d5e3051c::t_f9fa17f7f98f11 27-28
+docs/reference/pyproject.md
+  s_a3a123d5e3051c::t_82ce34a684c0d9 1-64
+docs/guide/what-is-an-agent-plugin.md
+  s_a3a123d5e3051c::t_688e22c5621fda 12-13,85-86
+  s_a3a123d5e3051c::t_bfb0882f352624 26
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 8,46
+  s_a3a123d5e3051c::t_f73283d498817a 22-25,27-39
+  s_a3a123d5e3051c::t_f4835594839161 1-7,9,11,14-21,40-45,47-84,87-88
+  s_a3a123d5e3051c::t_4607fab312a414 10
+docs/reference/plugin-json.md
+  s_a3a123d5e3051c::t_7ab3834e007457 39-44
+  s_a3a123d5e3051c::t_82ce34a684c0d9 1-38,45-78
+docs/guide/plugin-directory.md
+  s_a3a123d5e3051c::t_f4835594839161 1-70
+docs/reference/mcp-json.md
+  s_a3a123d5e3051c::t_82ce34a684c0d9 1-98,100-114
+  s_a3a123d5e3051c::t_7ab3834e007457 99
+docs/guide/artifact-lifecycle.md
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 56,60
+  s_a3a123d5e3051c::t_f4835594839161 1-9,12-22,24-41,43-55,57-59,61-67
+  s_a3a123d5e3051c::t_688e22c5621fda 10-11,23,42
+plugin.json
+  s_a3a123d5e3051c::t_a063c0cb021a93 10
+docs/integrations/agent-skills.md
+  s_a3a123d5e3051c::t_f49d59e7bccb2b 1-63
+docs/.vitepress/theme/custom.css
+  s_a3a123d5e3051c::t_1bdecc07b21b68 141,145,149,160,164-165,171
+  s_a3a123d5e3051c::t_4089ba5bbd703b 80,87,93,98,101,105,114,120
+  s_a3a123d5e3051c::t_da457a75983a15 1-79,81-86,88-92,94-97,99-100,102-104,106-113,115-119,121-140,142-144,146-148,150-159,161-163,166-170,172-174
+docs/reference/python-api.md
+  s_a3a123d5e3051c::t_681b9e47542b34 1-27,29-64,66-84,87-96,98-117,120-147,150-156,163-175,178-275,307-308
+  s_a3a123d5e3051c::t_f71e4ac0ce180c 85-86,118-119,148-149,176-177
+  s_a3a123d5e3051c::t_7ab3834e007457 28,97,157-162
+  s_a3a123d5e3051c::t_0c8f7719e59454 65,276-306
+  s_a3a123d5e3051c::t_f3100dd15c7ffc 309-312
+docs/.vitepress/config.mts
+  s_a3a123d5e3051c::t_f7ec92c9b6e734 53,186-188
+  s_a3a123d5e3051c::t_da457a75983a15 2,4,34-37,39-43,45-49,51-52,54-58,60-64,66,76-84,86-87,104-185,189-191,193-196,198-202,204,207-216,225,234-235
+  s_a3a123d5e3051c::t_eabeedb8fdfc8b 50
+  s_a3a123d5e3051c::t_f0650694bbcb43 103
+  s_a3a123d5e3051c::t_cbf2961dcff623 197,203,205-206
+  s_a3a123d5e3051c::t_4607fab312a414 44,192
+  s_a3a123d5e3051c::t_ccc07b63b94c05 1,22-32,228
+  s_a3a123d5e3051c::t_f28078d8a6fe7f 85
+  s_a3a123d5e3051c::t_4368272e3d0285 88-102
+  s_a3a123d5e3051c::t_6533b7331c45a5 3,5-21,33,38,59,226-227,229-233
+  s_a3a123d5e3051c::t_1b17dca818eeb1 65,67-75,217-224
+docs/scripts/verify-build.mjs
+  s_a3a123d5e3051c::t_3bc32147ec87c1 69-76
+  s_a3a123d5e3051c::t_ccc07b63b94c05 28,68
+  s_a3a123d5e3051c::t_477d6e6729513c 1-27,29-55,61-67,77-89
+  s_a3a123d5e3051c::t_e691e103bd0a17 56-60
+.gitignore
+  s_a3a123d5e3051c::t_614b8f087d6f5d 14-15
+  s_a3a123d5e3051c::t_1c2abbf8300417 12-13,16-19
+docs/guide/verify-package.md
+  s_a3a123d5e3051c::t_f4835594839161 1-12,14-48,50,59-60,62-63,73-74,76-79,84-85,87-88
+  s_a3a123d5e3051c::t_17d9a60a1defa9 13,49,51-58,61,64-72,75,80-83,86
+docs/tsconfig.json
+  s_a3a123d5e3051c::t_da457a75983a15 1-2,5-12
+  s_a3a123d5e3051c::t_f3100dd15c7ffc 3-4
+docs/reference/errors.md
+  s_a3a123d5e3051c::t_82ce34a684c0d9 1-72
+docs/guide/inspect-installed.md
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 8,22
+  s_a3a123d5e3051c::t_28e5834f1fe17b 54-75
+  s_a3a123d5e3051c::t_f49d59e7bccb2b 1-7,9-21,23-53,76-99
+docs/.npmrc
+  s_a3a123d5e3051c::t_da457a75983a15 1-2
+docs/.vitepress/env.d.ts
+  s_a3a123d5e3051c::t_663bfc1e54e436 1
+docs/troubleshooting.md
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 28-29,89
+  s_a3a123d5e3051c::t_681b9e47542b34 1-27,30-88,90-103
+docs/index.md
+  s_a3a123d5e3051c::t_1ab85dd32e0477 39
+  s_a3a123d5e3051c::t_4607fab312a414 4,8,26-28,31-32,34-36
+  s_a3a123d5e3051c::t_0c8f7719e59454 52,54,56
+  s_a3a123d5e3051c::t_da457a75983a15 1-3,5-7,9-25,29-30,33,37-38,40-43,46,48-51,53,55,57-58
+  s_a3a123d5e3051c::t_18de6975ed12b5 44,47
+  s_a3a123d5e3051c::t_1b17dca818eeb1 45
+docs/.vitepress/theme/index.ts
+  s_a3a123d5e3051c::t_da457a75983a15 1-8
+docs/integrations/mcp-servers.md
+  s_a3a123d5e3051c::t_7ab3834e007457 60
+  s_a3a123d5e3051c::t_f49d59e7bccb2b 1-59,61-81
+docs/reference/cli.md
+  s_a3a123d5e3051c::t_82ce34a684c0d9 1-100
+docs/guide/validation.md
+  s_a3a123d5e3051c::t_8e2c3f03ba9bdb 16,54
+  s_a3a123d5e3051c::t_f49d59e7bccb2b 1-13,15,17-53,55-60
+  s_a3a123d5e3051c::t_7ab3834e007457 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "c28af9936ab35125612e4ff6f3d9aabc51530a20",
+  "prompts": {},
+  "sessions": {
+    "s_a3a123d5e3051c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07246-943c-78b1-8f0e-405f71feeb0c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
