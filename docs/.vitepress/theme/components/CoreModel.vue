@@ -145,9 +145,6 @@ const stages: Stage[] = [
       </template>
     </ol>
 
-    <p class="more">
-      <a href="/guide/artifact-lifecycle">Follow the release</a>
-    </p>
   </section>
 </template>
 
@@ -155,7 +152,7 @@ const stages: Stage[] = [
 .core-model {
   --core-model-mono: 12px;
   max-width: 1216px;
-  margin: 8px auto 40px;
+  margin: 64px auto 40px;
   padding: 0 24px;
 }
 
@@ -165,16 +162,14 @@ const stages: Stage[] = [
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.2;
-  text-align: center;
 }
 
 .lead {
   max-width: 620px;
-  margin: 12px auto 40px;
+  margin: 12px 0 40px;
   color: var(--vp-c-text-2);
   font-size: 16px;
   line-height: 1.6;
-  text-align: center;
 }
 
 .lead code {
@@ -296,18 +291,6 @@ const stages: Stage[] = [
   transform: rotate(90deg);
 }
 
-.more {
-  margin: 36px 0 0;
-  text-align: center;
-}
-
-.more a {
-  color: var(--vp-c-brand-1);
-  font-weight: 500;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
 @media (min-width: 640px) {
   .core-model {
     padding: 0 48px;
@@ -317,7 +300,7 @@ const stages: Stage[] = [
 @media (min-width: 1024px) {
   .core-model {
     --core-model-mono: 10.5px;
-    margin: 16px auto 56px;
+    margin: 80px auto 56px;
     padding: 0 24px;
   }
 
