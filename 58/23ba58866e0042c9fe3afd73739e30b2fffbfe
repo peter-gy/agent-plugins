@@ -1,0 +1,64 @@
+docs/.vitepress/theme/index.ts
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 1,3-4,6,10-15,22-68
+  s_83c3cd5e13e83e::t_674ca660ded182 16-21
+docs/.vitepress/config.mts
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 50,198,217,228
+  s_83c3cd5e13e83e::t_bf0e88fcd9be13 19,25
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 2,24,26-27,234
+docs/index.md
+  s_83c3cd5e13e83e::t_26b180c4a76ab9 24
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 29
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 4,7-8,26,30-32,35,37-38,41
+  s_83c3cd5e13e83e::t_5c63a9931c2c8f 27-28,33-34,39-40
+docs/guide/artifact-lifecycle.md
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 8-9
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 10
+docs/.vitepress/theme/custom.css
+  s_83c3cd5e13e83e::t_75a6ffb20fa1bf 80-86,89-91
+  s_83c3cd5e13e83e::t_63145777a8f3c4 125,128-129
+  s_83c3cd5e13e83e::t_f97509b7294fe1 116-117,120-121,124,147-148
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 98-109,112-113,138-140,143-144
+docs/guide/what-is-an-agent-plugin.md
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 18,20
+  s_83c3cd5e13e83e::t_f97509b7294fe1 24-25,36
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 3,8-9,16-17,19
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 26-27,31-33
+  s_83c3cd5e13e83e::t_399172148f7b42 28,30
+  s_83c3cd5e13e83e::t_db3e3b852d6d54 29
+docs/reference/errors.md
+  s_83c3cd5e13e83e::t_f97509b7294fe1 12-13,20
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 14-17
+docs/scripts/verify-build.mjs
+  s_83c3cd5e13e83e::t_2b5a6aab1d5c9b 32-36
+  s_83c3cd5e13e83e::t_6f1599334e4e02 9-11,93,97,104
+  s_83c3cd5e13e83e::t_f97509b7294fe1 88-92,94-96,98-103,105-112
+README.md
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 10,26,32,107-108,139
+  s_83c3cd5e13e83e::t_399172148f7b42 144-155,158
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 28-30
+docs/guide/getting-started.md
+  s_83c3cd5e13e83e::t_46e08d1f0c5cf8 118
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 8
+docs/guide/inspect-installed.md
+  s_83c3cd5e13e83e::t_f76cd9f800eaf0 56
+docs/package.json
+  s_83c3cd5e13e83e::t_bb37631a6715b6 19,22-23
+  s_83c3cd5e13e83e::t_f0bd8e817df052 24
+  s_83c3cd5e13e83e::t_46ddd246bee500 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "5823ba58866e0042c9fe3afd73739e30b2fffbfe",
+  "prompts": {},
+  "sessions": {
+    "s_83c3cd5e13e83e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0729c-2b88-7f10-96b0-66709a99f4eb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
