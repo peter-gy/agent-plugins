@@ -1,0 +1,36 @@
+development_docs/testing-and-release.md
+  s_a3a123d5e3051c::t_1c2abbf8300417 1-16,20-23,36-54,56-58,63-70,73-80,82-90,92-93
+  s_a3a123d5e3051c::t_ac8d88c9603319 55
+  s_a3a123d5e3051c::t_dc7c85714ce231 59,62
+  s_a3a123d5e3051c::t_0be4f86c8f5514 71-72
+  s_a3a123d5e3051c::t_0c8f7719e59454 81,91
+  s_a3a123d5e3051c::t_0663b7c1d32bae 24-35,60-61
+  s_a3a123d5e3051c::t_688e22c5621fda 17-19
+development_docs/README.md
+  s_a3a123d5e3051c::t_1c2abbf8300417 1-11
+development_docs/artifacts.md
+  s_a3a123d5e3051c::t_1c2abbf8300417 1-70
+development_docs/architecture.md
+  s_a3a123d5e3051c::t_f0cc00a7af381e 20-34
+  s_a3a123d5e3051c::t_1c2abbf8300417 1-19,35-81
+tests/test_docs.py
+  s_a3a123d5e3051c::t_0be4f86c8f5514 1-31
+development_docs/validation.md
+  s_a3a123d5e3051c::t_1c2abbf8300417 1-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "d74f1d035f46e67ad804b63d596bfa3b6f2dbdfd",
+  "prompts": {},
+  "sessions": {
+    "s_a3a123d5e3051c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07246-943c-78b1-8f0e-405f71feeb0c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
