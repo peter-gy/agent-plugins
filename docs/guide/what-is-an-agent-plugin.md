@@ -5,11 +5,11 @@ description: Ship a Python library and its Agent Plugin in one versioned distrib
 
 # What is an Agent Plugin?
 
-An **agent client** is an application that loads agent instructions and integrations. [Agent Skills](https://agentskills.io/specification) provide reusable instructions and resources. [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) servers connect agents to tools and services. Both can be reused across clients, but clients often package and discover them differently.
+An **agent client** is an application that loads agent instructions and integrations. [Agent Skills](https://agentskills.io/specification) provide reusable instructions and resources. [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) servers connect agents to tools and services. Both can be reused across clients, yet each client's native plugin format may place and describe them differently.
 
-[Agent Plugins](https://agent-plugins.org/) gives those portable components one predictable directory with a `plugin.json` manifest and fixed discovery locations. Namespaced [client extensions](/integrations/client-extensions) keep client-specific data and files in the same plugin while other clients continue loading the portable components they support.
+[Agent Plugins](https://agent-plugins.org/) defines one small package contract: a `plugin.json` manifest, fixed locations for skills and MCP server configuration, and namespaced [client extensions](/integrations/client-extensions). Plugin authors maintain one structure. Compatible clients discover the same structure and load the parts they support.
 
-The specification leaves distribution and installation to clients. `agent-plugins` connects the format to Python packaging. When a Python library and its plugin follow separate distribution paths, their versions can diverge. A regular wheel installs them together beside the Python distribution metadata. An editable wheel points discovery at the authored plugin directory. The Python API and command-line interface (CLI) locate either form through the installed distribution metadata.
+The specification leaves distribution and installation to clients. `agent-plugins` carries that directory through Python packaging beside the library it extends. A regular wheel installs the code and plugin together. An editable wheel points discovery at the authored plugin directory. The Python API and command-line interface (CLI) locate either form through the installed distribution metadata.
 
 A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) is an installable Python archive. A [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/) carries source files for a build frontend to turn into a wheel.
 
@@ -75,9 +75,7 @@ Several names and versions coexist by design.
 
 ## Related work
 
-[Vercel's introduction to Agent Plugins](https://vercel.com/blog/introducing-agent-plugins) describes the cross-client need for one portable home for skills and MCP servers while clients retain their own installation, policy, and extension behavior.
-
-[TanStack Intent](https://tanstack.com/intent/) versions Agent Skills with npm library releases and discovers them from installed dependencies. `agent-plugins` applies that package-manager pattern to Python and uses the complete Agent Plugins directory as its artifact, including the manifest, optional skills and MCP configuration, and client extension files.
+[TanStack Intent](https://tanstack.com/intent/) versions Agent Skills with npm library releases and discovers them from installed dependencies. `agent-plugins` applies that package-manager pattern to Python and uses the broader Agent Plugins directory as its artifact, including the manifest, optional skills and MCP configuration, and client extension files.
 
 ## What the library owns
 
