@@ -1,0 +1,21 @@
+docs/.vitepress/theme/index.ts
+  s_aea99d502a961e::t_e0c70da19203b9 69
+docs/.vitepress/theme/components/CoreModel.vue
+  s_aea99d502a961e::t_13524428ea7657 155,169,303
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "8faf06e5f46b7af3b806eaf28653626d94d915bb",
+  "prompts": {},
+  "sessions": {
+    "s_aea99d502a961e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07318-948f-7520-8053-3295a7fa7144",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
