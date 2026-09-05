@@ -1,11 +1,11 @@
 ---
 name: agent-plugins
-description: Ship Agent Skills, MCP server configuration, and extension files with a Python package, choosing build-time or runtime access as needed. Use when adding an Agent Plugin to a Python project, configuring uv_build or Hatchling, locating installed plugin and skill paths, traversing skill files, reading manifest, skill source, or MCP values, or verifying wheel, source distribution, and editable installs.
+description: Ship Agent Skills, MCP server configuration, and client extension files with a Python distribution, choosing build-time or runtime access as needed. Use when adding an Agent Plugin to a Python project, configuring uv_build or Hatchling, locating installed plugin and skill paths, traversing skill files, reading manifest, skill source, or MCP server configuration, or verifying wheel, source distribution, and editable installs.
 ---
 
 # Agent Plugins
 
-Use `agent-plugins` when a Python package should carry the instructions and MCP
+Use `agent-plugins` when a Python distribution should carry the instructions and MCP
 configuration that match its installed code version.
 
 An [Agent Plugin](https://agent-plugins.org/) is an open, vendor-neutral
@@ -15,9 +15,9 @@ and [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification
 server configuration in the same package. Distribution, permissions, and user
 experience remain with each client.
 
-## Build the plugin tree
+## Build the plugin directory
 
-Keep one Agent Plugin tree in the codebase:
+Keep one Agent Plugin directory in the codebase:
 
 ```text
 my-plugin/
@@ -35,7 +35,7 @@ my-plugin/
 - `plugin.json` identifies the plugin and its Agent Plugins schema.
 - `skills/` contains Agent Skills and their nested files.
 - `mcp.json` describes stdio, Streamable HTTP, or legacy HTTP+SSE servers.
-- Reverse-domain directories contain client-specific extension files.
+- Reverse-domain directories contain client extension files.
 
 Create a minimal `plugin.json` at the plugin root:
 
@@ -46,8 +46,9 @@ Create a minimal `plugin.json` at the plugin root:
 }
 ```
 
-Find the Python package's `pyproject.toml` and set
-`[tool.agent-plugins].root` relative to that file. For uv_build:
+Find the Python project's `pyproject.toml` and set
+`[tool.agent-plugins].root` to the authored plugin root. Prefer a path relative
+to `pyproject.toml`. For uv_build:
 
 ```toml
 [build-system]
@@ -79,7 +80,7 @@ include = ["bin/**", "com.example.client/**"]
 ```
 
 Every include pattern must stay within the plugin root and match at least one
-file.
+filesystem entry. A matched directory contributes its regular files.
 
 Use the build plan directly when another build system owns artifact writing:
 
@@ -92,7 +93,8 @@ for file in plan.files:
 ```
 
 `agent_plugins.build.BuildBackend` provides the wheel, source distribution, and
-editable hooks used by the bundled adapters.
+editable hooks used by the bundled adapters. A custom delegate must also expose
+the three corresponding `get_requires_for_build_*` hooks.
 
 ## Choose build-time or runtime access
 
@@ -105,7 +107,7 @@ code needs to locate or inspect Agent Plugins:
 dependencies = ["agent-plugins==0.1.1"]
 ```
 
-Locate a plugin with the Python package name used by pip:
+Locate a plugin with the Python distribution name used by pip:
 
 ```python
 import agent_plugins as ap
@@ -138,11 +140,12 @@ print(skill / "references" / "api.md")
 print(skill.tree(max_depth=2))
 ```
 
-Use `skill.frontmatter` for the source text between the `---` delimiters. Use
-`skill.body` for the Markdown source after the frontmatter. The first access to
-either property reads and splits `SKILL.md`, then caches both strings. Path and
-tree access leave the document unread so an agent can choose which files and
-content to load.
+Use `skill.frontmatter` for the raw source text between the `---` delimiters.
+Use `skill.body` for the Markdown source after the frontmatter. The package
+checks UTF-8 text and delimiter structure. It does not parse the frontmatter as
+YAML. The first access to either property reads and splits `SKILL.md`, then
+caches both strings. Path and tree access leave the document unread so an agent
+can choose which files and content to load.
 
 `plugin.manifest` is an `ap.Manifest`. `plugin.mcp` is an `ap.MCPConfig` when
 `mcp.json` exists. Each object exposes `.path` immediately. Accessing a parsed
@@ -150,12 +153,12 @@ field such as `manifest.name` or `mcp.servers` reads, validates, and caches its
 document. MCP access validates the manifest first.
 
 MCP servers are frozen `ap.StdioServer`, `ap.StreamableHTTPServer`, or
-`ap.SSEServer` values in a read-only mapping. `manifest.issues` records ignored
-manifest fields. `mcp.issues` records invalid server entries skipped during
-loading. Document-level failures raise `ap.ValidationError` on parsed value
-access.
+`ap.SSEServer` values in a read-only mapping. `manifest.issues` records
+non-fatal manifest violations. `mcp.issues` records invalid server entries
+skipped during loading. Document-level failures raise `ap.ValidationError` on
+parsed value access.
 
-Display the plugin to inspect its packaged tree:
+Display the plugin to inspect its selected directory tree:
 
 ```python
 print(plugin)
@@ -165,8 +168,9 @@ print(plugin.tree(max_depth=None, max_files=None))
 
 `Path(plugin)`, `Path(skill)`, and `Path(plugin.manifest)` use the native path
 protocol. When `plugin.mcp` is present, `Path(plugin.mcp)` does too.
-`ap.installed()` returns each discovered plugin keyed by installed Python
-package name.
+`ap.installed()` returns each discovered plugin keyed by Python distribution
+name. Discovery is fail-fast when a marked distribution has unusable metadata
+or selected files.
 
 ## Verify the package
 
@@ -181,15 +185,17 @@ Then verify the package through its installation boundaries:
 1. Build a wheel and source distribution.
 2. Build a wheel from the source distribution.
 3. Install the wheel in a clean environment.
-4. Install the Python package as editable.
+4. Install the Python project as editable.
 5. Call `ap.locate()` in both environments.
 6. Access `plugin.manifest.name` and `plugin.mcp.servers` when MCP exists to run
-   schema validation and the Agent Plugins rules.
+   the supported Agent Plugins JSON validation.
 7. Confirm each `skill.path`, `skill / "SKILL.md"`, and `skill.files` points to
    the packaged skill tree.
-8. Access `skill.frontmatter` and `skill.body` to verify the packaged
-   `SKILL.md` structure.
+8. Access `skill.frontmatter` and `skill.body` to verify UTF-8 text and the
+   packaged `SKILL.md` delimiter structure.
+9. Run an Agent Skills validator to check frontmatter fields and other Agent
+   Skills rules.
 
-Handle `ap.AgentPluginError` when a requested Python package or usable plugin
+Handle `ap.AgentPluginError` when a requested Python distribution or usable plugin
 root is absent. Handle `ap.ValidationError` when an installed plugin document
 or `SKILL.md` structure is invalid.

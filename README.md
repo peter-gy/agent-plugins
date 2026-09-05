@@ -1,36 +1,51 @@
-# agent-plugins
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-lockup-horizontal-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-lockup-horizontal-light.svg">
+    <img alt="agent-plugins" src="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-lockup-horizontal-light.svg" width="430">
+  </picture>
+</p>
 
-`agent-plugins` packages Agent Skills, Model Context Protocol configuration, and
-client extension files with a Python distribution. Each installed wheel carries
-the agent files that match its code version.
+<p align="center">
+  Ship agent instructions and tool integrations with Python packages.
+</p>
 
-The package implements the portable [Agent Plugins](https://agent-plugins.org/)
-directory format and supports Python 3.10 through 3.14.
+<p align="center">
+  <a href="https://peter-gy.github.io/agent-plugins/"><strong>Documentation</strong></a> ·
+  <a href="https://pypi.org/project/agent-plugins/"><strong>PyPI</strong></a> ·
+  <a href="https://agent-plugins.org/"><strong>Agent Plugins format</strong></a>
+</p>
 
-## Ship an Agent Plugin
+<p align="center">
+  <a href="https://pypi.org/project/agent-plugins/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/agent-plugins"></a>
+  <a href="https://pypi.org/project/agent-plugins/"><img alt="Supported Python versions" src="https://img.shields.io/pypi/pyversions/agent-plugins"></a>
+  <a href="https://github.com/peter-gy/agent-plugins/actions/workflows/ci.yml"><img alt="CI status" src="https://github.com/peter-gy/agent-plugins/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/peter-gy/agent-plugins/blob/main/LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/pypi/l/agent-plugins"></a>
+</p>
 
-Keep one Agent Plugin tree beside the code it documents:
+`agent-plugins` adds a portable [Agent Plugin](https://agent-plugins.org/) directory to regular Python [wheels](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) and [source distributions](https://packaging.python.org/en/latest/specifications/source-distribution-format/). A wheel is an installable archive. A source distribution carries source files for a later build. Editable installs point discovery at the authored directory.
+
+An Agent Plugin can contain [Agent Skills](https://agentskills.io/specification), [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) server configuration, and [client extension files](https://peter-gy.github.io/agent-plugins/integrations/client-extensions).
+
+## Quickstart
+
+Keep the plugin directory beside its Python package:
 
 ```text
 my-project/
 ├── plugin.json
 ├── skills/
-│   └── use-my-package/
-│       ├── SKILL.md
-│       ├── agents/
-│       ├── references/
-│       └── scripts/
-├── mcp.json
+│   └── use-my-project/
+│       └── SKILL.md
 └── packages/
     └── python/
-        └── pyproject.toml
+        ├── pyproject.toml
+        └── src/
+            └── my_project/
+                └── __init__.py
 ```
 
-`skills/` contains [Agent Skills](https://agentskills.io/specification).
-`mcp.json` contains [Model Context Protocol](https://modelcontextprotocol.io/specification)
-server configuration when the plugin provides MCP servers.
-
-Create `plugin.json` at the plugin root:
+Create `plugin.json`:
 
 ```json
 {
@@ -39,9 +54,29 @@ Create `plugin.json` at the plugin root:
 }
 ```
 
-Configure the Python package to wrap `uv_build`:
+Create `skills/use-my-project/SKILL.md`:
+
+```md
+---
+name: use-my-project
+description: Use my-project to process project records.
+---
+
+# Use my-project
+
+Import `my_project` and call its public API.
+```
+
+Create an empty `packages/python/src/my_project/__init__.py`, then configure the Python project:
+
+Wrap the [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/) in `packages/python/pyproject.toml`:
 
 ```toml
+[project]
+name = "my-project"
+version = "0.1.0"
+requires-python = ">=3.10"
+
 [build-system]
 requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
 build-backend = "agent_plugins.build.uv_build"
@@ -50,55 +85,26 @@ build-backend = "agent_plugins.build.uv_build"
 root = "../.."
 ```
 
-`root` is relative to `pyproject.toml`. The build selects `plugin.json`, the
-complete `skills/` tree, and `mcp.json` when present.
-
-Build, install, and locate the packaged plugin:
+With the [uv package manager](https://docs.astral.sh/uv/) installed, preview the selected files, build the package, install the wheel in a temporary environment, and locate its Agent Plugin:
 
 ```console
+uv run --with "agent-plugins==0.1.1" agent-plugins plan packages/python
 uv build packages/python --out-dir dist
-python -m pip install "agent-plugins==0.1.1" dist/my_package-*.whl
-agent-plugins locate my-package
+uv run \
+  --with "agent-plugins==0.1.1" \
+  --with dist/my_project-0.1.0-py3-none-any.whl \
+  agent-plugins locate my-project
 ```
 
 ```text
-/.../site-packages/my_package-1.2.3.agent-plugin
+/path/to/site-packages/my_project-0.1.0.agent-plugin
 ```
 
-The wheel contains the plugin directory and an `agent_plugins.json` marker in
-the distribution metadata. A source distribution stages the same files for a
-reproducible wheel rebuild. An editable install points the marker at the authored
-plugin tree.
+The [complete quickstart](https://peter-gy.github.io/agent-plugins/guide/getting-started) includes the Python package and Agent Skill files needed for a runnable project.
 
-### Use Hatchling
+## Inspect installed plugins
 
-Keep the plugin settings and select the Hatchling adapter:
-
-```toml
-[build-system]
-requires = ["agent-plugins==0.1.1", "hatchling==1.31.0"]
-build-backend = "agent_plugins.build.hatchling"
-
-[tool.agent-plugins]
-root = "../.."
-```
-
-### Include other plugin files
-
-Add root-relative patterns for executables or client extensions:
-
-```toml
-[tool.agent-plugins]
-root = "../.."
-include = ["bin/**", "com.example.client/**"]
-```
-
-Each pattern must stay within the plugin root and match at least one file.
-
-## Inspect an installed plugin
-
-Add `agent-plugins` to the runtime dependencies of Python code that calls the
-inspection API:
+Add `agent-plugins` to runtime dependencies when Python code calls the inspection API:
 
 ```toml
 [project]
@@ -108,98 +114,48 @@ dependencies = ["agent-plugins==0.1.1"]
 ```python
 import agent_plugins as ap
 
-plugin = ap.locate("my-package")
+plugin = ap.locate("my-project")
 
 print(plugin.manifest.name)
-print(plugin.manifest.path)
+print(plugin.tree())
 
 for skill in plugin.skills:
-    print(skill.path)
-    print(skill / "SKILL.md")
+    print(skill.tree(max_depth=2))
+    print(skill.body)
 
-if mcp := plugin.mcp:
-    for name, server in mcp.servers.items():
+if plugin.mcp is not None:
+    for name, server in plugin.mcp.servers.items():
         print(name, server)
 ```
 
-`ap.locate()` accepts the distribution name used by `pip`. `ap.installed()`
-returns every discovered Agent Plugin keyed by distribution name.
+`locate()` accepts the Python distribution name used by `pip`. `plugin.manifest.name` is a separate Agent Plugin identity.
 
-| Object | Access |
-| --- | --- |
-| `plugin.path` | Absolute plugin root |
-| `plugin.manifest` | Lazy `plugin.json` document |
-| `plugin.skills` | `ap.Skill` objects rooted under `skills/` |
-| `plugin.mcp` | Lazy `mcp.json` document, when present |
-| `plugin.files` | Files selected by the package build |
-| `plugin.tree()` | Bounded ASCII tree of the installed plugin |
-| `skill.frontmatter` | Source text between the `---` delimiters |
-| `skill.body` | Markdown after the frontmatter |
-| `skill.files` | Files selected below the skill root |
+Agents that can execute Python in their working session, often called code-mode agents, can call the same API directly. They can traverse `plugin.skills`, inspect `skill.files` or `skill.tree()`, read `skill.frontmatter` and `skill.body`, and open referenced files through native `Path` operations. See [Inspect installed plugins](https://peter-gy.github.io/agent-plugins/guide/inspect-installed).
 
-Manifest, MCP, and skill documents load on first parsed-field access and cache
-their result. Call `ap.locate()` again to read a fresh snapshot. Invalid
-documents raise `ap.ValidationError`.
+## Core model
 
-MCP servers are frozen `ap.StdioServer`, `ap.StreamableHTTPServer`, or
-`ap.SSEServer` values. Their fields preserve placeholders such as
-`${PLUGIN_ROOT}` for the agent client to resolve.
+```text
+authored plugin directory
+        → build plan
+            ├── regular wheel → installed wheel + agent_plugins.json marker
+            ├── source distribution → rebuilt and installed wheel + agent_plugins.json marker
+            └── editable install → installed marker pointing to authored root
+        → Plugin handle and selected file inventory
+        → lazy manifest, skill, and MCP access
+```
 
-## Inspect a build plan
+The build plan selects files and checks their paths. Manifest, MCP, and skill-document content is read on first access through the inspection API and cached for that handle.
 
-Preview the files selected by `[tool.agent-plugins]` before building:
+## Development
+
+[`development_docs/`](https://github.com/peter-gy/agent-plugins/tree/main/development_docs) covers contributor setup, architecture, testing, packaging, documentation, and releases. Serve the docs through [Portless](https://portless.sh/):
 
 ```console
-agent-plugins plan packages/python
+pnpm --dir docs dev
 ```
 
-Use `--json` for machine-readable output. Python build integrations can consume
-the same plan:
+The main checkout uses `https://docs.agent-plugins.localhost`. Linked worktrees receive a branch-prefixed subdomain.
 
-```python
-import agent_plugins as ap
+## License
 
-plan = ap.build_plan("packages/python")
-for file in plan.files:
-    print(file.source, "->", file.target)
-```
-
-List every plugin visible in the current environment:
-
-```console
-agent-plugins list --json
-```
-
-## Develop and release
-
-From a repository checkout, install the locked development environment and run
-the local checks:
-
-```console
-uv sync --locked
-uv run ruff format --check src tests
-uv run ruff check src tests
-uv run ty check
-uv run pyrefly check
-uv run pytest -q
-./scripts/build-dist.sh
-```
-
-Prepare the version and lockfile in a release pull request:
-
-```console
-uv version --bump patch
-```
-
-After the release commit reaches `main` and its push CI passes, update the local
-branch and start the tag-driven release:
-
-```console
-git pull --ff-only origin main
-./scripts/release.sh --dry-run
-./scripts/release.sh
-```
-
-Before the first tag, configure PyPI to trust `.github/workflows/publish.yml`
-through the repository's `pypi` environment. PyPI documents the setup in
-[Adding a Trusted Publisher](https://docs.pypi.org/trusted-publishers/adding-a-publisher/).
+Licensed under the [Apache License 2.0](https://github.com/peter-gy/agent-plugins/blob/main/LICENSE).
