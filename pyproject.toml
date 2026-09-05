@@ -22,6 +22,8 @@ classifiers = [
 ]
 
 [project.urls]
+Documentation = "https://peter-gy.github.io/agent-plugins/"
+Issues = "https://github.com/peter-gy/agent-plugins/issues"
 Source = "https://github.com/peter-gy/agent-plugins"
 
 [project.scripts]

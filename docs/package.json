@@ -1,0 +1,27 @@
+{
+  "name": "agent-plugins-docs",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "portless",
+    "dev:server": "vitepress dev .",
+    "build": "vitepress build . && pnpm verify",
+    "preview": "vitepress preview .",
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify-build.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "portless": "0.15.6",
+    "typescript": "5.9.2",
+    "vitepress": "2.0.0-alpha.19"
+  },
+  "portless": {
+    "name": "docs.agent-plugins",
+    "script": "dev:server"
+  }
+}

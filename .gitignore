@@ -9,3 +9,11 @@ __pycache__/
 # Virtual environments
 .venv
 .agent-plugin
+
+# Documentation build files
+/.vitepress/cache/
+/.vitepress/dist/
+docs/node_modules/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+.DS_Store

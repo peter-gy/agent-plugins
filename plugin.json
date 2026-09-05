@@ -7,6 +7,7 @@
     "name": "Péter Ferenc Gyarmati",
     "email": "dev.petergy@gmail.com"
   },
+  "homepage": "https://peter-gy.github.io/agent-plugins/",
   "repository": "https://github.com/peter-gy/agent-plugins",
   "keywords": ["python", "agent-plugins", "agent-skills"]
 }
