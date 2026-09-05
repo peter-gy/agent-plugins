@@ -1,0 +1,22 @@
+docs/scripts/verify-deployment.mjs
+  s_aea99d502a961e::t_fa3d4cfe0288d5 1-87
+.github/workflows/docs.yml
+  s_aea99d502a961e::t_98637e9adcb2b0 79
+  s_aea99d502a961e::t_fa3d4cfe0288d5 87-96,100-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "b560e07d748b3fd45ac411de0248264c0f3cb6b7",
+  "prompts": {},
+  "sessions": {
+    "s_aea99d502a961e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07318-948f-7520-8053-3295a7fa7144",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
