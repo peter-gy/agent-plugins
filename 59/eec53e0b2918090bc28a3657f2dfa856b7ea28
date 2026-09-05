@@ -1,0 +1,32 @@
+tests/test_docs.py
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 7-9,12,17,23-24,28
+  s_a3a123d5e3051c::t_9ab5ac2ad1e447 20-22,25-26
+docs/guide/getting-started.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 64,78,107,124
+docs/guide/verify-package.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 13,65,70,81
+skills/agent-plugins/SKILL.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 55,66,107
+development_docs/testing-and-release.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 55
+README.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 81,91,94,111
+docs/guide/build-backends.md
+  s_a3a123d5e3051c::t_0d03b307bf5b8b 16,31,48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "59eec53e0b2918090bc28a3657f2dfa856b7ea28",
+  "prompts": {},
+  "sessions": {
+    "s_a3a123d5e3051c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07246-943c-78b1-8f0e-405f71feeb0c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
