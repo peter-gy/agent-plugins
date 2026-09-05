@@ -1,0 +1,40 @@
+docs/.vitepress/theme/index.ts
+  s_42dd8f683c4f5c::t_96fab5dc35d616 5,68-70
+README.md
+  s_42dd8f683c4f5c::t_dbfdc26793e899 141-147
+docs/.vitepress/theme/components/CoreModel.vue
+  s_42dd8f683c4f5c::t_91f95274159aba 156-158,227,242,317,320,329,333,372-375
+  s_42dd8f683c4f5c::t_28fcb4e2db5872 1-155,159-226,228-241,244-316,318,322-326,328,330-332,334-338,340-342,344-346,348-356,376-384
+  s_76ff9619b4c6e7::t_5e010736225b23 243
+  s_42dd8f683c4f5c::t_4ac40d977f2ef2 319,321,327,339,343,347,357-371
+docs/public/brand/agent-plugins-core-model-dark.svg
+  s_42dd8f683c4f5c::t_932492e702fe9b 1-1560
+docs/public/brand/agent-plugins-core-model-light.svg
+  s_42dd8f683c4f5c::t_932492e702fe9b 1-1560
+docs/.vitepress/env.d.ts
+  s_42dd8f683c4f5c::t_96fab5dc35d616 2-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "7ce9ac9b12bde93c00b1c2f0c11102ded54259c0",
+  "prompts": {},
+  "sessions": {
+    "s_42dd8f683c4f5c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5a3b3130-55e3-47f6-92f9-61367a6edc6f",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    },
+    "s_76ff9619b4c6e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07306-046f-7131-940c-360721f0e859",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
