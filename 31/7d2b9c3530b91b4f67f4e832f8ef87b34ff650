@@ -1,0 +1,34 @@
+skills/agent-plugins/SKILL.md
+  s_a3a123d5e3051c::t_1361a646df1c51 8,38,49-51,83,96-97,110,143-148,156-159,171-173,191,194-197
+  s_a3a123d5e3051c::t_2605eaa3aa3365 161,188,199
+  s_a3a123d5e3051c::t_69c2b19c72b5de 3,18,20
+README.md
+  s_a3a123d5e3051c::t_28e5834f1fe17b 123-124,133,151
+  s_a3a123d5e3051c::t_eaa7506a6d090e 28
+  s_a3a123d5e3051c::t_0663b7c1d32bae 154,157
+  s_a3a123d5e3051c::t_e952791852089e 72
+  s_a3a123d5e3051c::t_d313c2c254df77 88
+  s_a3a123d5e3051c::t_7f35ea00b48545 140-141
+  s_a3a123d5e3051c::t_0c8f7719e59454 42-45,57,59-63,65,67,70,75-79
+  s_a3a123d5e3051c::t_e4bbc62c1e28ee 1-2,6-7,9,11,13-17,19-22,24,27,29-32,38-39,48,81-82,90,92,97,99-100,103,105,107,117,120,126-127,131,135,137-139,143-144,147,149,159
+  s_a3a123d5e3051c::t_4607fab312a414 10
+  s_a3a123d5e3051c::t_2d561945934d70 142
+  s_a3a123d5e3051c::t_688e22c5621fda 26,91,93-96
+  s_a3a123d5e3051c::t_9977d74abf7086 3-5,23,161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "317d2b9c3530b91b4f67f4e832f8ef87b34ff650",
+  "prompts": {},
+  "sessions": {
+    "s_a3a123d5e3051c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07246-943c-78b1-8f0e-405f71feeb0c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
