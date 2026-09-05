@@ -2,6 +2,7 @@ import { h, nextTick, watch } from 'vue'
 import DefaultTheme from 'vitepress/theme'
 import { inBrowser, type Theme, useData } from 'vitepress'
 import { createMermaidRenderer } from 'vitepress-mermaid-renderer'
+import CoreModel from './components/CoreModel.vue'
 
 import 'vitepress-mermaid-renderer/css'
 import './custom.css'
@@ -64,6 +65,8 @@ export default {
       watch(isDark, configureMermaid)
     }
 
-    return h(DefaultTheme.Layout)
+    return h(DefaultTheme.Layout, null, {
+      'home-hero-after': () => h(CoreModel)
+    })
   }
 } satisfies Theme

@@ -138,17 +138,13 @@ Code-mode agents that can execute Python can use the installed distribution as t
 
 ## Core model
 
-```mermaid
-flowchart TD
-    source["Authored Python project<br/>Library code and Agent Plugin directory"]
-    build["Build one Python distribution"]
-    installed["Installed Python distribution<br/>Importable library, agent_plugins.json, and version-matched plugin"]
-    discover["locate(distribution_name)"]
-    handle["Plugin handle and selected file inventory"]
-    access["Lazy manifest, skill, and MCP reads<br/>Native paths to client extension files"]
-
-    source --> build --> installed --> discover --> handle --> access
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-core-model-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-core-model-light.svg">
+    <img alt="Core model: an authored Python project builds into one wheel that installs the library beside its version-matched Agent Plugin, which locate() returns as a plugin handle" src="https://raw.githubusercontent.com/peter-gy/agent-plugins/main/docs/public/brand/agent-plugins-core-model-light.svg" width="300">
+  </picture>
+</p>
 
 The build plan selects the plugin files and checks their paths before the backend packages them beside the library. Manifest, MCP, and skill-document content is read on first access through the inspection API and cached for that handle.
 
