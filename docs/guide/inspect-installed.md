@@ -53,7 +53,7 @@ An installed `Plugin` handle exposes exactly the paths recorded by the marker. D
 
 ## Use the API from a code-mode agent
 
-A code-mode agent that can execute Python can use the installed distribution as its skill source. It can use `agent-plugins` to discover the matching Agent Plugin, select an Agent Skill, read its instructions, and open supporting files when the current task needs them.
+A code-mode agent that can execute Python can use the installed distribution as its plugin source. It can use `agent-plugins` to inspect the manifest and MCP configuration, select an Agent Skill, read its instructions, and open client extension files when the current task needs them.
 
 ```python
 import agent_plugins as ap

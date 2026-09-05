@@ -47,7 +47,7 @@ function pageUrl(relativePath: string): string {
 export default defineConfig({
   title: 'agent-plugins',
   description:
-    'Keep Python libraries and their Agent Skills synchronized in one installable release.',
+    'Ship Agent Plugins with Python packages as one synchronized release.',
   base,
   cleanUrls: true,
   lastUpdated: true,
@@ -195,7 +195,7 @@ export default defineConfig({
       ? `${pageData.title} | agent-plugins`
       : 'agent-plugins'
     const description = pageData.description ||
-      'Keep Python libraries and their Agent Skills synchronized in one installable release.'
+      'Ship Agent Plugins with Python packages as one synchronized release.'
 
     ;((pageData.frontmatter.head ??= []) as HeadConfig[]).push(
       ['link', { rel: 'canonical', href: canonical }],
@@ -214,7 +214,7 @@ export default defineConfig({
         'meta',
         {
           property: 'og:image:alt',
-          content: 'Package Python libraries and their Agent Skills as one versioned distribution.'
+          content: 'Ship Agent Plugins with Python packages.'
         }
       ],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
@@ -225,7 +225,7 @@ export default defineConfig({
         'meta',
         {
           name: 'twitter:image:alt',
-          content: 'Package Python libraries and their Agent Skills as one versioned distribution.'
+          content: 'Ship Agent Plugins with Python packages.'
         }
       ]
     )

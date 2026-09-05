@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Keep Python libraries and their Agent Skills in one versioned package.
+  Ship Agent Plugins with Python packages.
 </p>
 
 <p align="center">
@@ -23,13 +23,13 @@
   <a href="https://github.com/peter-gy/agent-plugins/blob/main/LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/pypi/l/agent-plugins"></a>
 </p>
 
-`agent-plugins` packages a Python library and the Agent Skills written for it as one distribution. The wheel contains both the library code and an Agent Plugin directory, so installing one version makes its matching instructions available through Python distribution metadata.
+[Agent Plugins](https://agent-plugins.org/) gives [Agent Skills](https://agentskills.io/specification) and [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) servers one portable directory, while namespaced [client extensions](https://peter-gy.github.io/agent-plugins/integrations/client-extensions) preserve client-specific behavior. Compatible clients can discover the same package structure even when their native plugin formats differ.
 
-Code and instructions share one release boundary. Teams can update the library and skill together, evaluate the skill against that library build, then version, publish, install, and roll them back together. This removes a separate skill-distribution path that can drift from the installed library version.
+The specification defines the directory contract and leaves distribution and installation to clients. `agent-plugins` connects that contract to Python packaging. It adds an Agent Plugin to regular Python [wheels](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) and [source distributions](https://packaging.python.org/en/latest/specifications/source-distribution-format/) beside the library it extends. A wheel can carry the plugin manifest, skills, MCP configuration, and extension files, so installing one version makes the matching plugin available through Python distribution metadata. Editable installs point discovery at the authored directory.
 
-For users and agents, installation remains one package operation. The Agent Plugin is immediately available for compatible clients to discover, so there is no second skill installation to coordinate.
+Code and the complete plugin share one release boundary. Teams can update library behavior, skills, MCP configuration, and client extensions together, evaluate the resulting integration against that library build, then version, publish, install, and roll them back as one unit. This removes a separate plugin-distribution path that can drift from the installed library version.
 
-An [Agent Plugin](https://agent-plugins.org/) is a portable directory that can contain [Agent Skills](https://agentskills.io/specification), [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) server configuration, and [client extension files](https://peter-gy.github.io/agent-plugins/integrations/client-extensions). `agent-plugins` adds that directory to regular Python [wheels](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) and [source distributions](https://packaging.python.org/en/latest/specifications/source-distribution-format/). Editable installs point discovery at the authored directory.
+For users and agents, installation remains one package operation. The Agent Plugin is immediately available for compatible clients to discover, so there is no second plugin installation to coordinate.
 
 ## Quickstart
 
@@ -104,7 +104,7 @@ uv run \
 /path/to/site-packages/my_project-0.1.0.agent-plugin
 ```
 
-The printed directory came from the installed wheel. Its `SKILL.md` and the importable library share the wheel's distribution version.
+The printed Agent Plugin directory and the importable library came from the same wheel and share its distribution version.
 
 The [complete quickstart](https://peter-gy.github.io/agent-plugins/guide/getting-started) includes the Python package and Agent Skill files needed for a runnable project.
 
@@ -136,7 +136,7 @@ if plugin.mcp is not None:
 
 `locate()` accepts the Python distribution name used by `pip`. `plugin.manifest.name` is a separate Agent Plugin identity.
 
-Code-mode agents that can execute Python can use the installed distribution as their skill source. Through the same API, they can traverse `plugin.skills`, inspect `skill.files` or `skill.tree()`, read `skill.frontmatter` and `skill.body`, and open referenced files through native `Path` operations. See [Inspect installed plugins](https://peter-gy.github.io/agent-plugins/guide/inspect-installed).
+Code-mode agents that can execute Python can use the installed distribution as their plugin source. Through the same API, they can inspect the manifest and MCP configuration, traverse `plugin.skills`, read skill instructions, and open client extension files through native `Path` operations. See [Inspect installed plugins](https://peter-gy.github.io/agent-plugins/guide/inspect-installed).
 
 ## Core model
 
@@ -152,10 +152,16 @@ installed Python distribution
         ↓ locate(distribution_name)
 Plugin handle + selected file inventory
         ↓ lazy reads
-manifest + skills + MCP configuration
+manifest + optional skills, MCP configuration, and client extensions
 ```
 
 The build plan selects the plugin files and checks their paths before the backend packages them beside the library. Manifest, MCP, and skill-document content is read on first access through the inspection API and cached for that handle.
+
+## Related work
+
+[Vercel's introduction to Agent Plugins](https://vercel.com/blog/introducing-agent-plugins) explains the cross-client packaging problem and the small portable contract adopted by the open Agent Plugins project. This package supplies a Python distribution path for that contract.
+
+[TanStack Intent](https://tanstack.com/intent/) applies the same package-manager principle to Agent Skills in npm packages: skills version with library releases and agents discover them from installed dependencies. `agent-plugins` brings that alignment to Python and packages the complete Agent Plugin directory, including its manifest, optional skills and MCP configuration, and client extension files.
 
 ## Development
 
