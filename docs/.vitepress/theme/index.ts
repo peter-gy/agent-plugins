@@ -66,7 +66,7 @@ export default {
     }
 
     return h(DefaultTheme.Layout, null, {
-      'home-hero-after': () => h(CoreModel)
+      'home-features-after': () => h(CoreModel)
     })
   }
 } satisfies Theme
