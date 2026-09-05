@@ -1,31 +1,28 @@
 from __future__ import annotations
 
 import re
-import sys
 from pathlib import Path
 
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
-
 ROOT = Path(__file__).parent.parent
-PIN = re.compile(r"agent-plugins==([0-9]+\.[0-9]+\.[0-9]+)")
+RELEASE_SPECIFIC_PIN = re.compile(
+    r"\b(?:agent-plugins|uv[-_]build|hatchling)==\d+(?:\.\d+){2}\b"
+)
 
 
-def test_documented_package_pins_match_project_version() -> None:
-    project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
-    version = project["project"]["version"]
+def test_documented_dependency_examples_are_release_independent() -> None:
     documents = [
         ROOT / "README.md",
         ROOT / "skills" / "agent-plugins" / "SKILL.md",
         *(ROOT / "docs").rglob("*.md"),
+        *(ROOT / "development_docs").rglob("*.md"),
     ]
 
-    documented = {
-        match.group(1)
-        for document in documents
-        for match in PIN.finditer(document.read_text(encoding="utf-8"))
-    }
+    pinned: dict[str, list[str]] = {}
+    for document in documents:
+        matches = sorted(
+            set(RELEASE_SPECIFIC_PIN.findall(document.read_text(encoding="utf-8")))
+        )
+        if matches:
+            pinned[document.relative_to(ROOT).as_posix()] = matches
 
-    assert documented == {version}
+    assert pinned == {}

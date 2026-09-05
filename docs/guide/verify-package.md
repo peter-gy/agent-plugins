@@ -10,7 +10,7 @@ Verify each boundary that a package consumer depends on. A successful build plan
 ## 1. Inspect file selection
 
 ```console
-uv run --with "agent-plugins==0.1.1" agent-plugins plan packages/python --json
+uv run --with agent-plugins agent-plugins plan packages/python --json
 ```
 
 Check the authored plugin root and every target path. The plan should contain `plugin.json`, the intended Agent Skills, optional `mcp.json`, and selected client extension files.
@@ -62,12 +62,12 @@ Install the direct wheel in an isolated temporary environment and inspect it:
 
 ```console
 uv run --no-project --isolated --no-cache \
-  --with "agent-plugins==0.1.1" \
+  --with agent-plugins \
   --with dist/my_project-0.1.0-py3-none-any.whl \
   agent-plugins locate my-project
 
 uv run --no-project --isolated --no-cache \
-  --with "agent-plugins==0.1.1" \
+  --with agent-plugins \
   --with dist/my_project-0.1.0-py3-none-any.whl \
   agent-plugins list --json
 ```
@@ -78,7 +78,7 @@ Repeat the commands with `dist/from-sdist/my_project-0.1.0-py3-none-any.whl`. Th
 
 ```console
 uv run --no-project --isolated --no-cache \
-  --with "agent-plugins==0.1.1" \
+  --with agent-plugins \
   --with-editable packages/python \
   agent-plugins locate my-project
 ```

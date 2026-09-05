@@ -61,7 +61,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 
 [build-system]
-requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
+requires = ["agent-plugins", "uv_build"]
 build-backend = "agent_plugins.build.uv_build"
 
 [tool.agent-plugins]
@@ -75,7 +75,7 @@ root = "../.."
 Run the inspection command in a temporary uv environment and print the Agent Plugin build plan:
 
 ```console
-uv run --with "agent-plugins==0.1.1" agent-plugins plan packages/python
+uv run --with agent-plugins agent-plugins plan packages/python
 ```
 
 The output begins with the resolved authored plugin root, followed by one target and source path per selected file:
@@ -104,7 +104,7 @@ Install the wheel in a temporary environment with `agent-plugins`, then locate i
 
 ```console
 uv run \
-  --with "agent-plugins==0.1.1" \
+  --with agent-plugins \
   --with dist/my_project-0.1.0-py3-none-any.whl \
   agent-plugins locate my-project
 ```
@@ -121,7 +121,7 @@ Add `agent-plugins` to the runtime dependencies of a Python project that needs t
 
 ```toml
 [project]
-dependencies = ["agent-plugins==0.1.1"]
+dependencies = ["agent-plugins"]
 ```
 
 Then inspect the installation from Python:

@@ -78,7 +78,7 @@ version = "0.1.0"
 requires-python = ">=3.10"
 
 [build-system]
-requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
+requires = ["agent-plugins", "uv_build"]
 build-backend = "agent_plugins.build.uv_build"
 
 [tool.agent-plugins]
@@ -88,10 +88,10 @@ root = "../.."
 With the [uv package manager](https://docs.astral.sh/uv/) installed, preview the selected files, build the package, install the wheel in a temporary environment, and locate its Agent Plugin:
 
 ```console
-uv run --with "agent-plugins==0.1.1" agent-plugins plan packages/python
+uv run --with agent-plugins agent-plugins plan packages/python
 uv build packages/python --out-dir dist
 uv run \
-  --with "agent-plugins==0.1.1" \
+  --with agent-plugins \
   --with dist/my_project-0.1.0-py3-none-any.whl \
   agent-plugins locate my-project
 ```
@@ -108,7 +108,7 @@ Add `agent-plugins` to runtime dependencies when Python code calls the inspectio
 
 ```toml
 [project]
-dependencies = ["agent-plugins==0.1.1"]
+dependencies = ["agent-plugins"]
 ```
 
 ```python

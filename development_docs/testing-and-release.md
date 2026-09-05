@@ -52,7 +52,7 @@ The distribution verifier:
 | Skill source splitting, caching, paths, display | `tests/test_skill.py` |
 | Manifest normalization, immutability, issues, caching | `tests/test_manifest.py` |
 | MCP transports, security checks, partial validation, caching | `tests/test_mcp.py` |
-| User-facing `agent-plugins` version pins | `tests/test_docs.py` |
+| Release-independent dependency examples | `tests/test_docs.py` |
 
 CI runs pytest on Linux for Python 3.10 through 3.14 and on Windows for Python 3.12. The quality job runs formatting, lint, both type checkers, ShellCheck, and distribution verification.
 
@@ -67,8 +67,6 @@ Create a release pull request that updates the project version and lockfile:
 ```console
 uv version --bump patch
 ```
-
-Update the exact `agent-plugins==X.Y.Z` pins in the README, public docs, and bundled Agent Skill in the same pull request. `tests/test_docs.py` checks every documented package pin against `project.version`.
 
 After the release commit reaches `main` and its push CI succeeds:
 

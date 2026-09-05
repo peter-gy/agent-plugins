@@ -13,7 +13,7 @@ Use the bundled uv_build adapter for projects that already build with [uv_build]
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.1", "uv_build==0.12.2"]
+requires = ["agent-plugins", "uv_build"]
 build-backend = "agent_plugins.build.uv_build"
 
 [tool.agent-plugins]
@@ -28,7 +28,7 @@ Use the bundled Hatchling adapter for projects built with [Hatchling](https://ha
 
 ```toml
 [build-system]
-requires = ["agent-plugins==0.1.1", "hatchling==1.31.0"]
+requires = ["agent-plugins", "hatchling"]
 build-backend = "agent_plugins.build.hatchling"
 
 [tool.agent-plugins]
@@ -45,7 +45,7 @@ Add it to runtime dependencies when installed Python code calls the inspection A
 
 ```toml
 [project]
-dependencies = ["agent-plugins==0.1.1"]
+dependencies = ["agent-plugins"]
 ```
 
 The adapter does not add this runtime dependency automatically.
