@@ -29,6 +29,14 @@ check(await isFile(indexPath), 'Missing built home page')
 check(await isFile(join(outputRoot, 'favicon.svg')), 'Missing built favicon')
 check(await isFile(join(outputRoot, 'og.png')), 'Missing built Open Graph image')
 check(await isFile(join(outputRoot, 'robots.txt')), 'Missing built robots file')
+check(
+  await isFile(join(outputRoot, 'guide', 'attach-wheel.html')),
+  'Missing built attach-wheel guide'
+)
+check(
+  await isFile(join(outputRoot, 'guide', 'inspect-project.html')),
+  'Missing built inspect-project guide'
+)
 check(await isFile(join(outputRoot, 'llms.txt')), 'Missing generated llms.txt')
 check(
   await isFile(join(outputRoot, 'llms-full.txt')),
@@ -97,6 +105,14 @@ if (await isFile(llmsPath)) {
     llms.includes(`${deployedSiteUrl.href}reference/python-api.md`),
     'llms.txt is missing the Python API Markdown URL'
   )
+  check(
+    llms.includes(`${deployedSiteUrl.href}guide/attach-wheel.md`),
+    'llms.txt is missing the attach-wheel Markdown URL'
+  )
+  check(
+    llms.includes(`${deployedSiteUrl.href}guide/inspect-project.md`),
+    'llms.txt is missing the inspect-project Markdown URL'
+  )
 }
 if (await isFile(llmsFullPath)) {
   const llmsFull = await readFile(llmsFullPath, 'utf8')
@@ -107,6 +123,14 @@ if (await isFile(llmsFullPath)) {
   check(
     llmsFull.includes('# Python API reference'),
     'llms-full.txt is missing the Python API content'
+  )
+  check(
+    llmsFull.includes('# Attach a prebuilt wheel'),
+    'llms-full.txt is missing the attach-wheel guide content'
+  )
+  check(
+    llmsFull.includes('# Inspect an authored project'),
+    'llms-full.txt is missing the inspect-project guide content'
   )
 }
 

@@ -16,7 +16,7 @@ def resolve_file(path: str | os.PathLike[str]) -> Path:
     try:
         configured = candidate.parent.resolve(strict=True) / candidate.name
         resolved = configured.resolve(strict=True)
-    except OSError as error:
+    except (OSError, RuntimeError) as error:
         raise AgentPluginError(
             f"Plugin document cannot be resolved: {candidate}"
         ) from error

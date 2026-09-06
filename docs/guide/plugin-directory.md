@@ -57,7 +57,7 @@ Run the build plan from any working directory by passing the Python project dire
 agent-plugins plan packages/python --json
 ```
 
-Use `BuildPlan.files` from Python when another build system owns artifact writing:
+Inspect the same plan from Python:
 
 ```python
 import agent_plugins as ap
@@ -67,4 +67,12 @@ for file in plan.files:
     print(file.source, "->", file.target)
 ```
 
-The plan is the authoritative preview of packaged paths. `Plugin(path)` serves a different job and discovers every current file under the directory.
+The plan is the authoritative preview of packaged paths. Pass it to `attach_wheel()` when another build tool already created the wheel:
+
+```python
+result = ap.attach_wheel("dist/my_project-1.0.0-py3-none-any.whl", plan=plan)
+```
+
+`Plugin(path)` serves a different job and discovers every current file under the directory.
+
+Use [`Plugin.from_project()`](/guide/inspect-project) to construct a plugin handle from this exact package selection.

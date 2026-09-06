@@ -1,6 +1,7 @@
-"""Locate and inspect Agent Plugins installed by Python distributions."""
+"""Package and inspect Agent Plugins through Python distributions."""
 
 from ._build.plan import BuildPlan, FileMapping, build_plan
+from ._build.wheel import WheelAttachment, attach_wheel
 from ._discovery import installed, locate
 from ._errors import AgentPluginError
 from ._plugin import Plugin
@@ -9,6 +10,7 @@ from ._schema import (
     Manifest,
     MCPConfig,
     MCPServer,
+    ResolvedStdioServer,
     SSEServer,
     StdioServer,
     StreamableHTTPServer,
@@ -26,12 +28,15 @@ __all__ = [
     "MCPServer",
     "Manifest",
     "Plugin",
+    "ResolvedStdioServer",
     "SSEServer",
     "Skill",
     "StdioServer",
     "StreamableHTTPServer",
     "ValidationError",
     "ValidationIssue",
+    "WheelAttachment",
+    "attach_wheel",
     "build_plan",
     "installed",
     "locate",

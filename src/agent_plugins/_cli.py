@@ -9,6 +9,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from ._build.plan import BuildPlan, build_plan
+from ._build.wheel import WheelAttachment, attach_wheel
 from ._discovery import installed, locate
 from ._errors import AgentPluginError
 
@@ -21,8 +22,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             _list_plugins(as_json=arguments.json)
         elif arguments.command == "locate":
             print(locate(arguments.distribution).path)
-        else:
+        elif arguments.command == "plan":
             _print_plan(build_plan(arguments.project), as_json=arguments.json)
+        else:
+            result = attach_wheel(
+                arguments.wheel,
+                project=arguments.project,
+                output_dir=arguments.output_dir,
+            )
+            _print_attachment(result, as_json=arguments.json)
+            for signature in result.removed_signatures:
+                print(
+                    "agent-plugins: warning: removed invalidated wheel signature: "
+                    f"{signature.as_posix()}",
+                    file=sys.stderr,
+                )
     except AgentPluginError as error:
         print(f"agent-plugins: error: {error}", file=sys.stderr)
         return 1
@@ -32,7 +46,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agent-plugins",
-        description="Locate installed Agent Plugins and inspect package build plans.",
+        description="Package and inspect Agent Plugins in Python distributions.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -64,6 +78,33 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     plan_parser.add_argument(
+        "--json", action="store_true", help="Write a JSON object to stdout."
+    )
+
+    attach_parser = commands.add_parser(
+        "attach-wheel",
+        help="Attach the configured Agent Plugin to one wheel.",
+        description=(
+            "Attach the configured Agent Plugin to one wheel. "
+            "By default, atomically rewrite WHEEL in place."
+        ),
+    )
+    attach_parser.add_argument("wheel", type=Path, help="Existing .whl file.")
+    attach_parser.add_argument(
+        "--project",
+        type=Path,
+        default=Path.cwd(),
+        help=(
+            "Project directory containing pyproject.toml. "
+            "Defaults to the current directory."
+        ),
+    )
+    attach_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Preserve the input and write the same wheel filename in this directory.",
+    )
+    attach_parser.add_argument(
         "--json", action="store_true", help="Write a JSON object to stdout."
     )
     return parser
@@ -105,3 +146,21 @@ def _print_plan(plan: BuildPlan, *, as_json: bool) -> None:
     print(f"root\t{plan.root}")
     for mapping in plan.files:
         print(f"{mapping.target.as_posix()}\t{mapping.source}")
+
+
+def _print_attachment(result: WheelAttachment, *, as_json: bool) -> None:
+    if as_json:
+        value = {
+            "source": str(result.source),
+            "output": str(result.output),
+            "dist_info": result.dist_info.as_posix(),
+            "plugin_root": result.plugin_root.as_posix(),
+            "files": [path.as_posix() for path in result.files],
+            "replaced_existing_plugin": result.replaced_existing_plugin,
+            "removed_signatures": [
+                path.as_posix() for path in result.removed_signatures
+            ],
+        }
+        print(json.dumps(value, ensure_ascii=False, indent=2))
+        return
+    print(result.output)

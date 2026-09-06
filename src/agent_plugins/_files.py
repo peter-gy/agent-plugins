@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from ._errors import AgentPluginError
 
@@ -62,8 +62,18 @@ class FileInventory:
             or ".." in relative.parts
         ):
             raise ValueError(f"Invalid inventory subtree: {path}")
+        candidate = self.root.joinpath(*relative.parts)
+        try:
+            root = candidate.resolve(strict=True)
+            root.relative_to(self.root)
+        except (OSError, RuntimeError, ValueError) as error:
+            raise AgentPluginError(
+                f"Inventory subtree cannot be resolved: {candidate}"
+            ) from error
+        if not root.is_dir():
+            raise AgentPluginError(f"Inventory subtree is not a directory: {candidate}")
         return type(self)(
-            root=self.root.joinpath(*relative.parts),
+            root=root,
             names=tuple(
                 name.relative_to(relative)
                 for name in self.names
@@ -74,6 +84,36 @@ class FileInventory:
     def paths(self) -> tuple[Path, ...]:
         """Return absolute paths for the selected files."""
         return tuple(self.root.joinpath(*name.parts) for name in self.names)
+
+    def file(
+        self,
+        path: str | os.PathLike[str],
+        *,
+        kind: str,
+    ) -> Path:
+        """Return one selected regular file below the inventory root."""
+        try:
+            relative = _relative_name(path, kind=kind)
+        except AgentPluginError as error:
+            raise AgentPluginError(
+                f"Invalid {kind} file path under {self.root}: {os.fspath(path)!r}"
+            ) from error
+        value = relative.as_posix()
+        if relative not in self.names:
+            raise AgentPluginError(
+                f"{kind} file is not selected under {self.root}: {value}"
+            )
+        candidate = self.root.joinpath(*relative.parts)
+        try:
+            resolved = candidate.resolve(strict=True)
+            resolved.relative_to(self.root)
+        except (OSError, RuntimeError, ValueError) as error:
+            raise AgentPluginError(
+                f"{kind} file cannot be resolved: {candidate}"
+            ) from error
+        if not resolved.is_file():
+            raise AgentPluginError(f"{kind} file is invalid: {candidate}")
+        return candidate
 
 
 def path_sort_key(path: PurePosixPath) -> tuple[str, str]:
@@ -90,7 +130,7 @@ def _resolve_root(
     candidate = Path(path)
     try:
         root = candidate.resolve(strict=True)
-    except OSError as error:
+    except (OSError, RuntimeError) as error:
         raise AgentPluginError(
             f"{kind} root cannot be resolved: {candidate}"
         ) from error
@@ -108,20 +148,12 @@ def _validate_names(
 ) -> tuple[PurePosixPath, ...]:
     selected: set[PurePosixPath] = set()
     for name in names:
-        relative = PurePosixPath(name)
-        value = relative.as_posix()
-        if (
-            relative.is_absolute()
-            or relative == PurePosixPath(".")
-            or ".." in relative.parts
-            or "\\" in value
-        ):
-            raise AgentPluginError(f"Invalid {kind} file path: {value}")
+        relative = _relative_name(name, kind=kind)
         candidate = root.joinpath(*relative.parts)
         try:
             resolved = candidate.resolve(strict=True)
             resolved.relative_to(root)
-        except (OSError, ValueError) as error:
+        except (OSError, RuntimeError, ValueError) as error:
             raise AgentPluginError(
                 f"{kind} file cannot be resolved: {candidate}"
             ) from error
@@ -133,3 +165,27 @@ def _validate_names(
     if required_path not in selected:
         raise AgentPluginError(f"{kind} files must include {required}")
     return tuple(sorted(selected, key=path_sort_key))
+
+
+def _relative_name(
+    path: str | os.PathLike[str] | PurePosixPath,
+    *,
+    kind: str,
+) -> PurePosixPath:
+    value = os.fspath(path)
+    if not isinstance(value, str):
+        raise AgentPluginError(f"Invalid {kind} file path: {value!r}")
+    raw_parts = value.split("/")
+    relative = PurePosixPath(value)
+    if (
+        not value
+        or relative.is_absolute()
+        or PureWindowsPath(value).drive
+        or relative == PurePosixPath(".")
+        or ".." in relative.parts
+        or "\\" in value
+        or "." in raw_parts
+        or "" in raw_parts
+    ):
+        raise AgentPluginError(f"Invalid {kind} file path: {value}")
+    return relative

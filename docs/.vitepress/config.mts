@@ -125,6 +125,7 @@ export default defineConfig({
         items: [
           { text: 'Plugin directory', link: '/guide/plugin-directory' },
           { text: 'Build backends', link: '/guide/build-backends' },
+          { text: 'Attach a prebuilt wheel', link: '/guide/attach-wheel' },
           { text: 'Editable installs', link: '/guide/editable-installs' },
           { text: 'Verify a package', link: '/guide/verify-package' }
         ]
@@ -143,6 +144,7 @@ export default defineConfig({
       {
         text: 'Inspect',
         items: [
+          { text: 'Authored projects', link: '/guide/inspect-project' },
           { text: 'Installed plugins', link: '/guide/inspect-installed' },
           { text: 'Validation and caching', link: '/guide/validation' }
         ]

@@ -1,6 +1,10 @@
 # Discovery and validation
 
-Installed discovery creates a bounded filesystem inventory first. Document parsing happens when a caller requests content.
+Project and installed discovery create a bounded filesystem inventory first. Document parsing happens when a caller requests content.
+
+## Project selection
+
+`Plugin.from_project(project)` calls `build_plan(project)`, then constructs a `FileInventory` from its root and target paths. This makes source inspection use the same selection as wheel creation. Direct `Plugin(path)` construction continues to inventory the complete directory tree.
 
 ## Installed discovery
 
@@ -14,11 +18,13 @@ The distribution name remains independent from the manifest plugin name.
 
 `FileInventory` keeps one resolved root and sorted tuple of validated relative paths.
 
-Direct `Plugin(path)` and `Skill(path)` construction discovers every current regular file. Installed discovery selects only marker-listed paths.
+Direct `Plugin(path)` and `Skill(path)` construction discovers every current regular file. Project and installed discovery select build-plan or marker-listed paths.
 
 Relative names reject absolute paths, `.`, parent traversal, and backslashes. Every selected path must exist, be a regular file, and resolve inside the inventory root. Runtime ordering uses case-folded POSIX path followed by original POSIX path.
 
 `Plugin.skills` recognizes exact three-part paths of the form `skills/<name>/SKILL.md`. `Plugin.mcp` exists when the selected inventory contains exact root-level `mcp.json`.
+
+`Plugin.skill(name)` selects a cached immediate skill by its structural directory name. `Skill.file(path)` requires exact inventory membership and rechecks the regular-file and containment boundary at access time.
 
 ## Lazy document cache
 
@@ -55,11 +61,13 @@ The versioned loader owns:
 - URL user-information, fragment, escaping, whitespace, and port checks.
 - HTTP header name, value, and case-insensitive uniqueness checks.
 
-The loader preserves placeholder strings. It does not expand them, inspect executable availability, open a transport, authenticate, or perform an MCP handshake.
+The loader preserves placeholder strings. `MCPConfig.resolve_stdio()` applies one-pass placeholder expansion, resolves selected plugin commands and working directories, and returns immutable subprocess inputs. Runtime resolution is uncached because it depends on the caller's data directory, base environment, and current filesystem.
+
+Process creation, permissions, transport connection, authentication, logging, and the MCP handshake remain client-owned.
 
 ## Skill document structure
 
-`SkillDocument` reads UTF-8 text and splits at exact `---` delimiter lines. It preserves all source text between and after those delimiters.
+`SkillDocument` reads UTF-8 text once and splits at exact `---` delimiter lines. It preserves the complete source plus all text between and after those delimiters.
 
 It does not parse YAML or enforce Agent Skills names, descriptions, field types, lengths, or directory-name parity. Keep this limited contract explicit when adding validation or documentation.
 

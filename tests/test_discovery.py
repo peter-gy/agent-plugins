@@ -85,6 +85,36 @@ def test_locate_limits_each_skill_to_packaged_files(
     assert "local.md" not in plugin.skills[0].tree()
 
 
+def test_locate_preserves_structural_name_for_contained_skill_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    distribution, root = _distribution(
+        tmp_path,
+        files=("plugin.json", "skills/alias/SKILL.md"),
+    )
+    target = root / "skills" / "target"
+    target.mkdir(parents=True)
+    instructions = target / "SKILL.md"
+    instructions.write_text(
+        "---\nname: target\ndescription: Target\n---\n# Target\n",
+        encoding="utf-8",
+    )
+    try:
+        (root / "skills" / "alias").symlink_to(target, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+    monkeypatch.setattr(
+        "agent_plugins._discovery.metadata.distribution",
+        lambda _name: distribution,
+    )
+
+    plugin = ap.locate("demo-provider")
+    skill = plugin.skill("alias")
+
+    assert skill.path == target.resolve()
+    assert skill.file("SKILL.md") == instructions.resolve()
+
+
 def test_locate_limits_the_tree_to_packaged_plugin_files(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

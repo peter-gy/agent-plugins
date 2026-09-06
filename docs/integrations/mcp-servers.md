@@ -38,7 +38,7 @@ The build includes root-level `mcp.json` automatically. Add the local executable
 | `streamable-http` | `url` and optional `headers` | A Streamable HTTP endpoint |
 | `sse` | `url` and optional `headers` | A legacy HTTP plus Server-Sent Events endpoint |
 
-`agent-plugins` validates and exposes the configuration. The agent client resolves placeholders, supplies permissions, starts local processes, opens transports, and manages writable plugin data.
+`agent-plugins` validates the configuration and resolves stdio declarations into subprocess inputs. The agent client supplies permissions, starts local processes, opens transports, and manages writable plugin data.
 
 ## Reference packaged paths
 
@@ -47,11 +47,50 @@ Agent clients provide two reserved runtime locations:
 - `${PLUGIN_ROOT}` identifies the active installed plugin root.
 - `${PLUGIN_DATA}` identifies a client-managed writable data directory.
 
-The library preserves placeholder strings. It accepts `cwd` values equal to either placeholder, below either placeholder, or beginning with `./` for a plugin-relative directory. Paths that escape the plugin root or plugin data directory are rejected.
+The parser preserves placeholder strings. It accepts `cwd` values equal to either placeholder, below either placeholder, or beginning with `./` for a plugin-relative directory. `resolve_stdio()` expands the placeholders once and rejects paths that escape the plugin root or plugin data directory.
 
-A stdio command can be a bare executable name such as `python` or a plugin-relative value beginning with `./`. Other command paths are rejected. The library checks containment for plugin-relative commands but does not check that the target exists or is executable.
+A stdio command can be a bare executable name such as `python` or a plugin-relative value beginning with `./`. Other command paths are rejected. `resolve_stdio()` preserves a bare command as one token and resolves a plugin-relative command to a regular file inside the plugin root. Configuration obtained through `plugin.mcp` also requires that file in the plugin's selected inventory.
 
 `env` cannot define the reserved names `PLUGIN_ROOT` or `PLUGIN_DATA`.
+
+## Resolve a stdio launch
+
+Create the plugin data directory according to the client application's storage policy, then resolve one validated server:
+
+```python
+from pathlib import Path
+import os
+import subprocess
+
+import agent_plugins as ap
+
+plugin = ap.locate("my-project")
+data_dir = Path(".agent-data/my-project").resolve()
+data_dir.mkdir(parents=True, exist_ok=True)
+
+mcp = plugin.mcp
+if mcp is None:
+    raise RuntimeError("The plugin has no MCP configuration")
+
+launch = mcp.resolve_stdio(
+    "records",
+    data_dir=data_dir,
+    base_env={"PATH": os.environ.get("PATH", "")},
+)
+
+process = subprocess.Popen(
+    [launch.command, *launch.args],
+    cwd=launch.cwd,
+    env=dict(launch.env),
+    stdin=subprocess.PIPE,
+    stdout=subprocess.PIPE,
+    stderr=None,
+)
+```
+
+`ResolvedStdioServer` contains a command token, argument tuple, read-only environment mapping, and absolute working directory. Placeholder expansion applies to arguments, configured environment values, and `cwd`. It leaves the command and non-reserved environment keys unchanged. Platform-equivalent reserved keys are replaced by canonical `PLUGIN_ROOT` and `PLUGIN_DATA` entries.
+
+The caller creates and retains `PLUGIN_DATA`, chooses the base environment, starts the process, and owns permissions, logging, shutdown, and the MCP handshake. `resolve_stdio()` performs no process or network work.
 
 ## Connect to HTTP safely
 

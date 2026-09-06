@@ -72,6 +72,27 @@ def test_plan_command_reports_configuration_errors(
     )
 
 
+def test_build_plan_reports_invalid_utf8_as_agent_plugin_error(tmp_path: Path) -> None:
+    (tmp_path / "pyproject.toml").write_bytes(b"\xff")
+
+    with pytest.raises(ap.AgentPluginError, match="Cannot read project configuration"):
+        ap.build_plan(tmp_path)
+
+
+def test_build_plan_reports_symlink_loop_as_agent_plugin_error(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    try:
+        project.symlink_to(project.name)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(
+        ap.AgentPluginError,
+        match=r"Project path cannot be resolved|Project has no pyproject.toml",
+    ):
+        ap.build_plan(project)
+
+
 def _project(tmp_path: Path, *, include: str = "bin/**") -> tuple[Path, Path]:
     root = tmp_path / "repository"
     project = root / "packages" / "demo"

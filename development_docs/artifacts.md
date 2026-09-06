@@ -1,6 +1,6 @@
 # Artifact lifecycle
 
-The build-backend adapter computes the Agent Plugin build plan before asking its delegate to create an artifact. It then rewrites the returned wheel or source distribution.
+Configuration adapters produce a validated `BuildPlan`. `attach_wheel()` consumes a plan and rewrites one regular wheel. `BuildBackend` obtains the same plan before delegation, then calls the regular wheel operation or the internal source-distribution and editable-wheel writers.
 
 ## Build plan
 
@@ -29,23 +29,29 @@ The wrapper passes `config_settings` and `metadata_directory` through unchanged.
 
 ## Regular wheel rewrite
 
-The wheel must contain exactly one top-level `.dist-info/WHEEL` member. Its stem determines the plugin directory name:
+`attach_wheel()` resolves one existing `.whl` file. When `plan` is absent, it calls `build_plan(project or Path.cwd())`. Passing both values fails before artifact access. A supplied plan bypasses project configuration.
+
+The wheel must contain exactly one top-level `.dist-info/WHEEL` member plus sibling `METADATA` and `RECORD` members. Duplicate names, absolute names, parent traversal, and backslashes are rejected. The `.dist-info` stem determines the plugin directory name:
 
 ```text
 <distribution>-<version>.agent-plugin/
 ```
 
-The rewrite removes any existing owned plugin directory, `agent_plugins.json`, `RECORD`, and `RECORD` signature files. It copies other members, writes the selected plugin payload, writes a compact marker, then creates a new `RECORD`.
+The rewrite removes any existing owned plugin directory, `agent_plugins.json`, `RECORD`, and `RECORD` signature files. It copies every other member with its bytes and relevant `ZipInfo` metadata, preserves the archive comment, writes the selected plugin payload in plan order, writes a compact marker, then creates a new `RECORD`.
 
-Added members use the ZIP epoch timestamp, deflate compression, and source permission bits. `RECORD` hashes use SHA-256 with URL-safe base64 and no padding. The `RECORD` row itself has empty hash and size fields.
+Added members use the ZIP epoch timestamp, deflate compression, and source permission bits. `RECORD` contains one row per non-directory member. Its hashes use SHA-256 with URL-safe base64 and no padding. The `RECORD` row itself has empty hash and size fields.
 
-The rewrite uses a temporary file in the output directory and replaces the delegated wheel after success. A rewrite failure can leave the unaugmented delegated artifact at its original output path.
+`RECORD.jws` and `RECORD.p7s` are invalid after mutation. The rewrite omits them and returns their archive paths through `WheelAttachment.removed_signatures`.
+
+The rewrite uses a temporary file in the destination directory and applies the source artifact mode before publication. In-place attachment replaces the source after the complete rewrite succeeds. `output_dir` preserves the source, keeps its filename, and uses a no-clobber publish operation. Planning, validation, source reads, ZIP writing, and publication failures leave the source bytes unchanged. Temporary artifacts are cleaned after success and failure.
+
+An existing marker or matching plugin payload sets `replaced_existing_plugin`. The rewrite removes that owned state before writing the current plan. Repeating the same attachment is byte-deterministic.
 
 ## Source distribution rewrite
 
 The source artifact must be a `.tar.gz` archive with one safe top-level directory. Absolute paths, parent traversal, or multiple roots are rejected.
 
-The rewrite replaces any existing `<archive-root>/.agent-plugin/` subtree and adds the planned payload there. New members preserve source modes and modification times while normalizing user and group identifiers to zero. The gzip header timestamp is zero.
+The rewrite replaces any existing `<archive-root>/.agent-plugin/` subtree and adds the planned payload there. New members preserve source modes and modification times while normalizing user and group identifiers to zero. The gzip header timestamp is zero. Temporary replacement also preserves the source distribution's outer file mode.
 
 The staged payload ensures that a later wheel rebuild carries the same selected plugin bytes. Complete wheel byte reproducibility remains owned by the delegated backend and source metadata.
 

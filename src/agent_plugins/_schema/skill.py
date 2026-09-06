@@ -11,12 +11,13 @@ from .lazy import LazyResult
 
 @dataclass(frozen=True, slots=True)
 class _SkillData:
+    source: str
     frontmatter: str
     body: str
 
 
 class SkillDocument:
-    """Expose the two source sections in `SKILL.md`."""
+    """Expose complete `SKILL.md` source and its two sections."""
 
     __slots__ = ("_path", "_result")
 
@@ -28,6 +29,11 @@ class SkillDocument:
     def frontmatter(self) -> str:
         """Return text between the frontmatter delimiters."""
         return self._result.get().frontmatter
+
+    @property
+    def source(self) -> str:
+        """Return the complete `SKILL.md` source text."""
+        return self._result.get().source
 
     @property
     def body(self) -> str:
@@ -54,6 +60,7 @@ def _load(path: Path) -> _SkillData:
     for index, line in enumerate(lines[1:], start=1):
         if _line_value(line) == "---":
             return _SkillData(
+                source=source,
                 frontmatter="".join(lines[1:index]),
                 body="".join(lines[index + 1 :]),
             )

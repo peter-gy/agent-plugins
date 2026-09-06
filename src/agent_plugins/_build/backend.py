@@ -10,7 +10,7 @@ from typing import Protocol, cast
 
 from .plan import build_plan
 from .sdist import write_sdist_plugin
-from .wheel import write_wheel_plugin
+from .wheel import _attach_editable_wheel, attach_wheel
 
 ConfigSettings = dict[str, object] | None
 
@@ -66,7 +66,7 @@ class BuildBackend:
         filename = self._delegate.build_wheel(
             wheel_directory, config_settings, metadata_directory
         )
-        write_wheel_plugin(Path(wheel_directory) / filename, plan)
+        attach_wheel(Path(wheel_directory) / filename, plan=plan)
         return filename
 
     def build_sdist(
@@ -91,7 +91,7 @@ class BuildBackend:
         filename = self._delegate.build_editable(
             wheel_directory, config_settings, metadata_directory
         )
-        write_wheel_plugin(Path(wheel_directory) / filename, plan, editable=True)
+        _attach_editable_wheel(Path(wheel_directory) / filename, plan)
         return filename
 
     def get_requires_for_build_wheel(

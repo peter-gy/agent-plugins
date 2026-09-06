@@ -7,6 +7,8 @@ description: Add Agent Plugin packaging to uv_build, Hatchling, or another compa
 
 An `agent-plugins` build-backend adapter delegates the Python package build, then augments the returned artifact. A regular wheel receives packaged plugin files and the `agent_plugins.json` marker. A source distribution receives staged plugin files. An editable wheel receives a marker that points at the authored plugin root.
 
+Use an adapter when `agent-plugins` owns the Python build path. When another tool already creates the wheel, run [`attach-wheel`](/guide/attach-wheel) after that build.
+
 ## uv_build
 
 Use the bundled uv_build adapter for projects that already build with [uv_build](https://docs.astral.sh/uv/concepts/build-backend/):

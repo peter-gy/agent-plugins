@@ -36,14 +36,19 @@ class BuildPlan:
 
 def build_plan(project: str | Path = ".") -> BuildPlan:
     """Load project configuration and return its complete plugin file plan."""
-    project_path = Path(project).resolve()
+    try:
+        project_path = Path(project).resolve()
+    except (OSError, RuntimeError) as error:
+        raise AgentPluginError(
+            f"Project path cannot be resolved: {project}. Check the path and retry."
+        ) from error
     pyproject = project_path / "pyproject.toml"
     if not project_path.is_dir() or not pyproject.is_file():
         raise AgentPluginError(f"Project has no pyproject.toml: {project_path}")
 
     try:
         document = tomllib.loads(pyproject.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError) as error:
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as error:
         raise AgentPluginError(
             f"Cannot read project configuration: {pyproject}"
         ) from error
@@ -61,7 +66,7 @@ def build_plan(project: str | Path = ".") -> BuildPlan:
     source_root = staged if (staged / "plugin.json").is_file() else configured
     try:
         root = source_root.resolve(strict=True)
-    except OSError as error:
+    except (OSError, RuntimeError) as error:
         raise AgentPluginError(
             f"Agent Plugin root cannot be resolved: {source_root}"
         ) from error
@@ -151,7 +156,7 @@ def _add_file(
     try:
         source = candidate.resolve(strict=True)
         source.relative_to(root)
-    except (OSError, ValueError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise AgentPluginError(f"Plugin file escapes its root: {candidate}") from error
     target = PurePosixPath(candidate.relative_to(root).as_posix())
     files[target] = source

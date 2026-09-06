@@ -13,6 +13,9 @@ from typing import Protocol, cast
 
 import pytest
 
+import agent_plugins as ap
+from agent_plugins._build.sdist import write_sdist_plugin
+
 
 class _Backend(Protocol):
     def build_wheel(self, wheel_directory: str) -> str: ...
@@ -39,6 +42,17 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
     wheel_directory.mkdir()
     wheel = wheel_directory / backend.build_wheel(str(wheel_directory))
     direct_payload = _assert_regular_wheel(wheel, executable_mode=executable_mode)
+
+    plain_directory = tmp_path / "plain"
+    plain_directory.mkdir()
+    delegate_name = "uv_build" if backend_name == "uv_build" else "hatchling.build"
+    delegate = cast(_Backend, importlib.import_module(delegate_name))
+    plain_wheel = plain_directory / delegate.build_wheel(str(plain_directory))
+    ap.attach_wheel(plain_wheel, plan=ap.build_plan(project))
+    assert (
+        _assert_regular_wheel(plain_wheel, executable_mode=executable_mode)
+        == direct_payload
+    )
 
     sdist_directory = tmp_path / "sdist"
     sdist_directory.mkdir()
@@ -83,6 +97,21 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
     _assert_record(editable)
 
 
+def test_sdist_rewrite_preserves_outer_mode(tmp_path: Path) -> None:
+    project, _root = _project(tmp_path, "uv_build")
+    source = tmp_path / "demo-provider-1.2.3.tar.gz"
+    content = tmp_path / "PKG-INFO"
+    content.write_text("Metadata-Version: 2.4\n", encoding="utf-8")
+    with tarfile.open(source, "w:gz") as archive:
+        archive.add(content, "demo-provider-1.2.3/PKG-INFO")
+    source.chmod(0o664)
+    source_mode = stat.S_IMODE(source.stat().st_mode)
+
+    write_sdist_plugin(source, ap.build_plan(project))
+
+    assert stat.S_IMODE(source.stat().st_mode) == source_mode
+
+
 def _assert_regular_wheel(wheel: Path, *, executable_mode: int) -> dict[str, bytes]:
     prefix = "demo_provider-1.2.3.agent-plugin"
     expected = {
@@ -117,7 +146,9 @@ def _assert_record(wheel: Path) -> None:
         record_name = f"{dist_info}/RECORD"
         rows = list(csv.reader(archive.read(record_name).decode().splitlines()))
         files = {name for name in archive.namelist() if not name.endswith("/")}
-        assert {row[0] for row in rows} == files
+        row_names = [row[0] for row in rows]
+        assert len(row_names) == len(set(row_names))
+        assert set(row_names) == files
         for name, digest, size in rows:
             if name == record_name:
                 assert (digest, size) == ("", "")

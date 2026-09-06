@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, Literal, TypeAlias
 
@@ -45,6 +46,20 @@ class StdioServer:
     args: tuple[str, ...] = ()
     env: Mapping[str, str] = field(default_factory=lambda: MappingProxyType({}))
     cwd: str | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "args", tuple(self.args))
+        object.__setattr__(self, "env", MappingProxyType(dict(self.env)))
+
+
+@dataclass(frozen=True, slots=True)
+class ResolvedStdioServer:
+    """Subprocess inputs resolved from an MCP stdio server declaration."""
+
+    command: str
+    args: tuple[str, ...]
+    env: Mapping[str, str]
+    cwd: Path
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "args", tuple(self.args))

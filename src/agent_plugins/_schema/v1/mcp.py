@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ipaddress
 import re
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from types import MappingProxyType
 from typing import cast
 from urllib.parse import urlsplit
@@ -72,7 +72,12 @@ def _stdio(value: dict[str, object], root: Path) -> StdioServer:
         raise _InvalidServer("MCP stdio command must not be empty")
     if command.startswith("./"):
         _plugin_path(root, command)
-    elif "/" in command or "\\" in command or "\0" in command:
+    elif (
+        "/" in command
+        or "\\" in command
+        or "\0" in command
+        or PureWindowsPath(command).drive
+    ):
         raise _InvalidServer("MCP stdio command must be a bare name or begin with ./")
 
     args = _string_array(value, "args")
@@ -133,15 +138,20 @@ def _cwd(root: Path, value: str) -> None:
 
 
 def _plugin_path(root: Path, value: str) -> None:
-    relative = PurePosixPath(value.removeprefix("./").replace("\\", "/"))
+    portable = value.removeprefix("./").replace("\\", "/")
+    if PureWindowsPath(portable).drive:
+        raise _InvalidServer("MCP server path escapes the plugin root")
+    relative = PurePosixPath(portable)
     candidate = root.joinpath(*relative.parts)
     try:
         candidate.resolve(strict=False).relative_to(root)
-    except (OSError, ValueError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise _InvalidServer("MCP server path escapes the plugin root") from error
 
 
 def _escapes(value: str) -> bool:
+    if PureWindowsPath(value).drive:
+        return True
     depth = 0
     for part in PurePosixPath(value.replace("\\", "/").lstrip("/")).parts:
         if part in {"", "."}:

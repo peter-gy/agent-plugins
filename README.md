@@ -29,6 +29,21 @@ The specification defines that directory boundary. `agent-plugins` carries the c
 
 The library and plugin share one release boundary. Teams can update library behavior, skills, MCP configuration, and client extensions together, evaluate the resulting integration against that build, then version, publish, install, and roll them back as one unit. Users and agents install one package, and compatible clients can discover the plugin for that installed library version immediately.
 
+Use a build-backend adapter when `agent-plugins` owns the Python build path. When another tool already produced the wheel, attach the configured plugin as a separate artifact step. The command and Python API rewrite the input after the complete attached artifact succeeds. Pass `--output-dir` or `output_dir` to preserve it.
+
+```console
+agent-plugins attach-wheel dist/example-1.0.0-py3-none-any.whl --project .
+```
+
+```python
+import agent_plugins as ap
+
+result = ap.attach_wheel("dist/example-1.0.0-py3-none-any.whl")
+print(result.output)
+```
+
+Both paths use the same build plan and wheel writer. See [Attach a prebuilt wheel](https://peter-gy.github.io/agent-plugins/guide/attach-wheel) for output copies, result fields, reruns, and signature handling.
+
 ## Quickstart
 
 Keep the plugin directory beside its Python package:
@@ -106,7 +121,7 @@ The printed Agent Plugin directory and the importable library came from the same
 
 The [complete quickstart](https://peter-gy.github.io/agent-plugins/guide/getting-started) includes the Python package and Agent Skill files needed for a runnable project.
 
-## Inspect installed plugins
+## Inspect a project or installation
 
 Add `agent-plugins` to runtime dependencies when Python code calls the inspection API:
 
@@ -118,21 +133,24 @@ dependencies = ["agent-plugins"]
 ```python
 import agent_plugins as ap
 
-plugin = ap.locate("my-project")
+source = ap.Plugin.from_project("packages/python")
+installed = ap.locate("my-project")
+skill = source.skill("use-my-project")
 
-print(plugin.manifest.name)
-print(plugin.tree())
+print(source.manifest.name)
+print(skill.source)
+print(skill.file("SKILL.md"))
 
-for skill in plugin.skills:
-    print(skill.tree(max_depth=2))
-    print(skill.body)
-
-if plugin.mcp is not None:
-    for name, server in plugin.mcp.servers.items():
+if installed.mcp is not None:
+    for name, server in installed.mcp.servers.items():
         print(name, server)
 ```
 
-`locate()` accepts the Python distribution name used by `pip`. `plugin.manifest.name` is a separate Agent Plugin identity.
+`Plugin.from_project()` exposes exactly the files selected by `[tool.agent-plugins]`. After installing a build produced from that selection, `locate()` exposes the same plugin-relative inventory. `Plugin(path)` remains the directory-tree constructor for every current file below a plugin root.
+
+`skill.source` returns the complete cached `SKILL.md` text. `skill.file()` checks that a resource belongs to the selected inventory before returning its path.
+
+`locate()` accepts the Python distribution name used by `pip`. `installed.manifest.name` is a separate Agent Plugin identity.
 
 Code-mode agents that can execute Python can use the installed distribution as their plugin source. Through the same API, they can inspect the manifest and MCP configuration, traverse `plugin.skills`, read skill instructions, and open client extension files through native `Path` operations. See [Inspect installed plugins](https://peter-gy.github.io/agent-plugins/guide/inspect-installed).
 
@@ -146,7 +164,7 @@ Code-mode agents that can execute Python can use the installed distribution as t
   </picture>
 </p>
 
-The build plan selects the plugin files and checks their paths before the backend packages them beside the library. Manifest, MCP, and skill-document content is read on first access through the inspection API and cached for that handle.
+The build plan selects the plugin files and checks their paths before a build-backend adapter or `attach_wheel()` packages them beside the library. Manifest, MCP, and skill-document content is read on first access through the inspection API and cached for that handle.
 
 ## Related work
 
