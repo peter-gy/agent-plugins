@@ -324,7 +324,7 @@ def _inspect_archive(archive: zipfile.ZipFile, path: Path) -> _WheelLayout:
 def _validate_members(archive: zipfile.ZipFile) -> set[str]:
     names: set[str] = set()
     for info in archive.infolist():
-        name = info.filename
+        name = info.orig_filename
         path = PurePosixPath(name)
         windows_path = PureWindowsPath(name)
         raw_parts = name.split("/")
@@ -384,9 +384,10 @@ def _copy_member(
         target.writestr(copied_info, b"")
         return
     try:
-        with source.open(info) as input_file, target.open(
-            copied_info, "w"
-        ) as output_file:
+        with (
+            source.open(info) as input_file,
+            target.open(copied_info, "w") as output_file,
+        ):
             digest, size = _copy(input_file, output_file)
     except (EOFError, RuntimeError, lzma.LZMAError, zlib.error) as error:
         raise AgentPluginError(
@@ -407,11 +408,14 @@ def _write_file(
         mode = stat.S_IMODE(source_stat.st_mode)
         info = _file_info(name, mode)
         info.file_size = source_stat.st_size
-        with source.open("rb") as input_file, archive.open(
-            info,
-            "w",
-            force_zip64=source_stat.st_size >= zipfile.ZIP64_LIMIT,
-        ) as output_file:
+        with (
+            source.open("rb") as input_file,
+            archive.open(
+                info,
+                "w",
+                force_zip64=source_stat.st_size >= zipfile.ZIP64_LIMIT,
+            ) as output_file,
+        ):
             digest, size = _copy(input_file, output_file)
     except OSError as error:
         raise AgentPluginError(
