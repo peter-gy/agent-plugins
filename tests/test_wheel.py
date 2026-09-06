@@ -176,7 +176,9 @@ def test_output_directory_works_without_hard_link_support(
     with zipfile.ZipFile(result.output) as archive:
         marker = json.loads(archive.read(f"{DIST_INFO}/agent_plugins.json"))
         assert marker["files"] == ["plugin.json"]
-        assert archive.read(f"{PLUGIN_ROOT}/plugin.json") == b"payload 0\n"
+        assert archive.read(f"{PLUGIN_ROOT}/plugin.json") == (
+            plan.files[0].source.read_bytes()
+        )
 
 
 def test_repeated_attachment_replaces_owned_payload_deterministically(
@@ -261,6 +263,12 @@ def test_attach_wheel_rejects_unsafe_members(
     tmp_path: Path, member: str, message: str
 ) -> None:
     wheel = _wheel(tmp_path / WHEEL_NAME, extra_members={member: b"unsafe"})
+    if "\\" in member:
+        contents = wheel.read_bytes()
+        normalized = member.replace("\\", "/").encode()
+        if member.encode() not in contents:
+            assert normalized in contents
+            wheel.write_bytes(contents.replace(normalized, member.encode()))
     original = wheel.read_bytes()
 
     with pytest.raises(ap.AgentPluginError, match=message):
@@ -411,7 +419,9 @@ def test_large_plugin_member_uses_zip64(
     ap.attach_wheel(wheel, plan=plan)
 
     with zipfile.ZipFile(wheel) as archive:
-        assert archive.read(f"{PLUGIN_ROOT}/plugin.json") == b"payload 0\n"
+        assert archive.read(f"{PLUGIN_ROOT}/plugin.json") == (
+            plan.files[0].source.read_bytes()
+        )
 
 
 def test_source_read_failure_preserves_input_and_cleans_temporary_file(

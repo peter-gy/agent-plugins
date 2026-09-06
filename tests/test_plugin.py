@@ -162,16 +162,14 @@ def test_plugin_from_project_uses_staged_sdist_inventory(tmp_path: Path) -> None
         f'{{"$schema":"{PLUGIN_SCHEMA}","name":"staged-plugin"}}\n',
         encoding="utf-8",
     )
-    (staged_skill / "SKILL.md").write_text(
-        "---\nname: staged\ndescription: Staged\n---\n# Staged\n",
-        encoding="utf-8",
-    )
+    staged_source = b"---\nname: staged\ndescription: Staged\n---\n# Staged\n"
+    (staged_skill / "SKILL.md").write_bytes(staged_source)
 
     plugin = ap.Plugin.from_project(project)
 
     assert plugin.path == staged.resolve()
     assert plugin.manifest.name == "staged-plugin"
-    assert plugin.skill("staged").source.endswith("# Staged\n")
+    assert plugin.skill("staged").source == staged_source.decode()
     assert configured.resolve() != plugin.path
 
 
