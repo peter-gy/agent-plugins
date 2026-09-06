@@ -47,7 +47,7 @@ if plugin.mcp is not None:
     print(plugin.mcp.path)
 ```
 
-An installed `Plugin` handle exposes exactly the paths recorded by the marker. Direct `Plugin(path)` construction instead discovers every regular file currently below that directory.
+An installed `Plugin` handle exposes exactly the paths recorded by the marker. [`Plugin.from_project()`](/guide/inspect-project) exposes the corresponding build-plan selection from a source project. Direct `Plugin(path)` construction inventories every regular file currently below a directory.
 
 `plugin.skills` contains immediate `skills/<name>` directories whose selected inventory contains exact-case `SKILL.md`. `plugin.mcp` is `None` unless selected files contain root-level `mcp.json`.
 
@@ -59,19 +59,16 @@ A code-mode agent that can execute Python can use the installed distribution as 
 import agent_plugins as ap
 
 plugin = ap.locate("my-project")
-skill = next(
-    skill for skill in plugin.skills if skill.path.name == "use-my-project"
-)
+skill = plugin.skill("use-my-project")
 
 print(skill.tree(max_depth=2))
-instructions = skill.body
+instructions = skill.source
 
-reference = skill / "references" / "api.md"
-if reference.is_file():
-    reference_text = reference.read_text(encoding="utf-8")
+reference = skill.file("references/api.md")
+reference_text = reference.read_text(encoding="utf-8")
 ```
 
-`skill.tree()` exposes the bounded file structure before the agent chooses what to read. `skill.frontmatter` and `skill.body` load the `SKILL.md` source on first access. Paths created with `/` work with `pathlib`, so the agent can read a selected reference or run a selected script through its normal code-execution tools.
+`skill.tree()` exposes the bounded file structure before the agent chooses what to read. `skill.source`, `skill.frontmatter`, and `skill.body` share one lazy read. `skill.file()` checks the selected inventory and containment before the agent reads a reference or runs a script through its normal code-execution tools.
 
 ## Use native paths
 
@@ -84,7 +81,7 @@ manifest_path = Path(plugin.manifest)
 skill_root = Path(plugin.skills[0])
 ```
 
-`skill / "references" / "api.md"` also returns a `Path`.
+`skill / "references" / "api.md"` also returns a `Path` through ordinary unchecked joining. Use `skill.file("references/api.md")` for a selected resource.
 
 ## Render a bounded tree
 

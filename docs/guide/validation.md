@@ -11,12 +11,16 @@ The package validates different contracts at different transitions. Keeping thes
 
 | Transition | Checks | Result |
 | --- | --- | --- |
-| `build_plan()` | Project configuration, selected paths, containment, required files | `BuildPlan`, `AgentPluginError`, or `UnicodeDecodeError` for invalid UTF-8 TOML |
+| `build_plan()` | Project configuration, selected paths, containment, required files | `BuildPlan` or `AgentPluginError` |
+| `attach_wheel()` | Build plan, wheel structure, archive member paths, destination, plugin source reads | `WheelAttachment` or `AgentPluginError` |
+| `Plugin.from_project()` | Build plan and exact selected inventory | `Plugin` or `AgentPluginError` |
 | `Plugin(path)` | Plugin root, recursive file inventory, required `plugin.json` | `Plugin` or `AgentPluginError` |
 | `locate()` | `agent_plugins.json` marker, installed root, exact selected inventory | `Plugin` or `AgentPluginError` |
 | Manifest property access | UTF-8 JSON, schema identifier, manifest fields | Normalized value, issues, or `ValidationError` |
 | MCP property access | Manifest first, then MCP top level and server entries | Server values, issues, or `ValidationError` |
 | Skill content access | UTF-8 text and frontmatter delimiters | Raw source strings or `ValidationError` |
+| `Skill.file()` | Selected membership, regular file, current containment | Absolute `Path` or `AgentPluginError` |
+| `MCPConfig.resolve_stdio()` | Server transport, data directory, contained command, working directory, and selected membership for `plugin.mcp` | `ResolvedStdioServer` or `AgentPluginError` |
 
 Build planning does not parse document contents. Skill content access does not parse YAML frontmatter.
 
@@ -42,7 +46,7 @@ for issue in manifest.issues:
 
 A `Plugin` or `Skill` handle captures its selected file inventory during construction. Adding or deleting files does not change that handle.
 
-Each manifest, MCP configuration, and skill document reads content on first content access. The object then caches the loaded value or raised exception under a lock.
+Each manifest, MCP configuration, and skill document reads content on first content access. The object then caches the loaded value or raised exception under a lock. Skill `source`, `frontmatter`, and `body` share one cached read.
 
 Create a new handle to refresh document contents:
 

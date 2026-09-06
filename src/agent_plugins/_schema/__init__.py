@@ -6,6 +6,7 @@ from .mcp import MCPConfig
 from .models import (
     Author,
     MCPServer,
+    ResolvedStdioServer,
     SSEServer,
     StdioServer,
     StreamableHTTPServer,
@@ -16,6 +17,7 @@ __all__ = [
     "MCPConfig",
     "MCPServer",
     "Manifest",
+    "ResolvedStdioServer",
     "SSEServer",
     "StdioServer",
     "StreamableHTTPServer",

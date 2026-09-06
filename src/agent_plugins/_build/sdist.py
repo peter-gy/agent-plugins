@@ -21,9 +21,11 @@ def write_sdist_plugin(sdist: Path, plan: BuildPlan) -> None:
             f"Source distribution must be a .tar.gz archive: {sdist_path}"
         )
 
+    mode = stat.S_IMODE(sdist_path.stat().st_mode)
     temporary = _temporary_sdist(sdist_path)
     try:
         _rewrite(sdist_path, temporary, plan)
+        temporary.chmod(mode)
         temporary.replace(sdist_path)
     finally:
         temporary.unlink(missing_ok=True)

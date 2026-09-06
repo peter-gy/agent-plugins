@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Recover from build-plan, installed discovery, document, and editable-install failures.
+description: Recover from build-plan, wheel-attachment, installed discovery, document, and editable-install failures.
 ---
 
 # Troubleshooting
@@ -23,6 +23,12 @@ Start from the first error line. The CLI writes handled failures as `agent-plugi
 
 Run `agent-plugins plan PROJECT --json` after each correction.
 
+## Wheel attachment failures
+
+`attach-wheel` names the incompatible file, archive member, or destination and the recovery action. Rebuild a corrupt wheel. Correct duplicate, absolute, parent-traversing, or backslash-containing archive members at their source build step.
+
+When `--output-dir` reports an existing destination, remove that artifact or select another existing directory. Attachment publishes the destination after the complete rewrite succeeds, so retrying the command is safe.
+
 ## Installed discovery failures
 
 Installed discovery reads the `agent_plugins.json` marker from Python distribution metadata. The marker records the plugin root and selected filenames.
@@ -39,11 +45,11 @@ Install the distribution in the same environment that runs `agent-plugins`.
 
 ### Distribution has no Agent Plugin
 
-The installed distribution lacks `agent_plugins.json`. Rebuild it with an `agent_plugins.build` backend adapter, reinstall the wheel, then run `locate` again.
+The installed distribution lacks `agent_plugins.json`. Rebuild it with an `agent_plugins.build` backend adapter or run `attach-wheel` on the trusted wheel. Reinstall the attached artifact, then run `locate` again.
 
 ### Outdated Agent Plugin metadata
 
-The marker predates the exact file inventory. Reinstall a wheel built by the current adapter.
+The marker predates the exact file inventory. Reinstall a wheel created by the current adapter or `attach-wheel` command.
 
 ### Invalid marker or selected files
 
@@ -63,6 +69,12 @@ Use the exact supported `$schema` identifier and check the affected field in [`p
 
 Manifest and MCP objects cache their first error. Create a new `Plugin`, `Manifest`, or `MCPConfig` handle after editing the file.
 
+## Skill lookup and resource failures
+
+`plugin.skill(name)` accepts one immediate skill directory name. Use a name listed in the error's sorted available skills.
+
+`skill.file(path)` accepts a portable path from the selected skill inventory. Use forward slashes and a path shown by `skill.files` or `skill.tree()`. Recreate the `Plugin` or `Skill` handle after changing selected filenames.
+
 ## Missing MCP server entries
 
 An invalid individual entry is skipped and recorded in `mcp.issues`:
@@ -74,11 +86,13 @@ for issue in plugin.mcp.issues:
 
 Check the server type, closed field set, stdio command and working-directory rules, URL security rules, and headers.
 
-An accepted entry can still fail at runtime. Confirm that the executable exists, has permission to run, or that the HTTP endpoint is reachable and completes the MCP handshake. Those checks belong to the consuming agent client.
+`resolve_stdio()` requires an existing plugin data directory, regular plugin-relative command, and existing contained working directory. When the configuration came from a `Plugin`, the command and plugin-root working directory must also belong to its selected inventory. Create the data directory through the client application's storage policy. Package a `./` command through the build plan and create any configured working directory in the applicable plugin or data root.
+
+After resolution, process creation can still fail because of permissions, executable format, platform search, or process policy. HTTP endpoints can fail to connect or complete the MCP handshake. Those checks belong to the consuming agent client.
 
 ## Invalid `SKILL.md`
 
-`skill.frontmatter` and `skill.body` require UTF-8 text, an opening `---` on the first line, and a later closing `---` line.
+`skill.source`, `skill.frontmatter`, and `skill.body` require UTF-8 text, an opening `---` on the first line, and a later closing `---` line.
 
 Create a new `Skill` handle after fixing the file because the first error is cached.
 

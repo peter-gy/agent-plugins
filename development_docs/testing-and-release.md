@@ -40,18 +40,22 @@ The distribution verifier:
 3. Installs the direct and rebuilt wheels in isolated targets.
 4. Verifies plugin file bytes, discovery, manifest access, skill access, CLI `locate`, and CLI `list --json`.
 5. Creates an editable installation and checks that discovery resolves the authored root.
+6. Uses the installed Python API and CLI to attach a synthetic external wheel, installs it, and verifies discovery.
 
 ## Test boundaries
 
 | Boundary | Primary evidence |
 | --- | --- |
 | Build-plan selection and CLI JSON | `tests/test_plan.py` |
-| Wheel, sdist, rebuilt wheel, editable marker, `RECORD`, file modes | `tests/test_build_backends.py` |
+| Public wheel attachment, preservation, validation, signatures, and `RECORD` | `tests/test_wheel.py` |
+| CLI attachment output, warnings, and exit statuses | `tests/test_cli.py` |
+| Backend parity, sdist rebuilds, editable markers, and sdist modes | `tests/test_build_backends.py` |
 | Installed distribution discovery and marker failures | `tests/test_discovery.py` |
-| Plugin inventory, paths, display, skill recognition | `tests/test_plugin.py` |
-| Skill source splitting, caching, paths, display | `tests/test_skill.py` |
+| Project-selected plugin inventory, paths, display, named skills | `tests/test_plugin.py` |
+| Exact skill source, checked files, caching, paths, display | `tests/test_skill.py` |
 | Manifest normalization, immutability, issues, caching | `tests/test_manifest.py` |
 | MCP transports, security checks, partial validation, caching | `tests/test_mcp.py` |
+| Pure stdio launch resolution and subprocess inputs | `tests/test_mcp_resolution.py` |
 | Release-independent dependency examples | `tests/test_docs.py` |
 
 CI runs pytest on Linux for Python 3.10 through 3.14 and on Windows for Python 3.12. The quality job runs formatting, lint, both type checkers, ShellCheck, and distribution verification.

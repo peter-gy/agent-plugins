@@ -44,20 +44,23 @@ The Python API checks UTF-8 text and the two delimiters. It returns the frontmat
 import agent_plugins as ap
 
 plugin = ap.locate("my-project")
+skill = plugin.skill("review-records")
 
-for skill in plugin.skills:
-    print(skill.path)
-    print(skill / "SKILL.md")
-    print(skill.frontmatter)
-    print(skill.body)
+print(skill.path)
+print(skill.source)
+print(skill.file("references/fields.md"))
 ```
 
 `skill.files` contains absolute paths from the selected inventory below that skill root. `skill.tree()` renders the same selection as a bounded ASCII tree.
 
-The `/` operator follows ordinary `pathlib.Path` joining semantics. Pass paths you trust. It is a convenience for reaching known instructions, references, scripts, agents, or assets.
+`plugin.skill(name)` selects an immediate skill by its structural directory name and reports sorted available names when the requested skill is absent.
+
+`skill.file(relative_path)` requires an exact selected file and rechecks containment. Use it for instructions, references, scripts, agents, and assets that came from an Agent Plugin inventory.
+
+The `/` operator remains an ordinary unchecked `pathlib.Path` join for compatibility.
 
 ## Content cache
 
-The first access to `skill.frontmatter` or `skill.body` reads and splits `SKILL.md`. Both strings, or the first `ValidationError`, remain cached on that `Skill` handle. Create a new handle to reread the file.
+The first access to `skill.source`, `skill.frontmatter`, or `skill.body` reads and splits `SKILL.md`. All three strings, or the first `ValidationError`, remain cached on that `Skill` handle. Create a new handle to reread the file.
 
-The cache preserves original line endings and source text. Delimiter lines are excluded from both returned strings. An empty body is accepted.
+`skill.source` preserves the complete document, including delimiters, original line endings, and final newline state. Delimiter lines are excluded from `frontmatter` and `body`. An empty body is accepted.

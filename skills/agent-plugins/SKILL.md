@@ -1,6 +1,6 @@
 ---
 name: agent-plugins
-description: Ship Agent Skills, MCP server configuration, and client extension files with a Python distribution, choosing build-time or runtime access as needed. Use when adding an Agent Plugin to a Python project, configuring uv_build or Hatchling, locating installed plugin and skill paths, traversing skill files, reading manifest, skill source, or MCP server configuration, or verifying wheel, source distribution, and editable installs.
+description: Ship and inspect Agent Skills, MCP server configuration, and client extension files with a Python distribution. Use when adding an Agent Plugin to a Python project, attaching a prebuilt wheel, loading the exact project or installed selection, selecting a named skill, reading checked skill resources, resolving a stdio MCP launch, or verifying package artifacts.
 ---
 
 # Agent Plugins
@@ -82,15 +82,40 @@ include = ["bin/**", "com.example.client/**"]
 Every include pattern must stay within the plugin root and match at least one
 filesystem entry. A matched directory contributes its regular files.
 
-Use the build plan directly when another build system owns artifact writing:
+Use `attach_wheel()` when another build system already produced the wheel. It rewrites the input after the complete attached artifact succeeds. Pass `output_dir` to preserve the source.
 
 ```python
 import agent_plugins as ap
 
-plan = ap.build_plan("packages/python")
-for file in plan.files:
-    print(file.source, file.target)
+result = ap.attach_wheel(
+    "dist/my_package-1.0.0-py3-none-any.whl",
+    project="packages/python",
+)
+print(result.output)
 ```
+
+The CLI exposes the same operation:
+
+```console
+agent-plugins attach-wheel dist/my_package-1.0.0-py3-none-any.whl \
+  --project packages/python
+```
+
+Reuse a previously computed plan by passing it directly:
+
+```python
+from pathlib import Path
+
+plan = ap.build_plan("packages/python")
+Path("dist/attached").mkdir(parents=True, exist_ok=True)
+result = ap.attach_wheel(
+    "dist/my_package-1.0.0-py3-none-any.whl",
+    plan=plan,
+    output_dir="dist/attached",
+)
+```
+
+The output directory receives the same filename. Inspect `result.replaced_existing_plugin` and `result.removed_signatures`. The CLI writes removed-signature warnings to stderr.
 
 `agent_plugins.build.BuildBackend` provides the wheel, source distribution, and
 editable hooks used by the bundled adapters. A custom delegate must also expose
@@ -107,45 +132,48 @@ code needs to locate or inspect Agent Plugins:
 dependencies = ["agent-plugins"]
 ```
 
-Locate a plugin with the Python distribution name used by pip:
+Load the exact project selection before building. After installing a build from that selection, locate it with the Python distribution name used by pip:
 
 ```python
 import agent_plugins as ap
 
+source = ap.Plugin.from_project("packages/python")
 plugin = ap.locate("my-package")
+skill = source.skill("use-my-package")
 
+print(source.path)
 print(plugin.path)
 print(plugin.manifest.path)
 print(plugin.manifest.name)
-
-for skill in plugin.skills:
-    print(skill.path)
-    print(skill / "SKILL.md")
+print(skill.source)
+print(skill.file("SKILL.md"))
 
 if mcp := plugin.mcp:
     for name, server in mcp.servers.items():
         print(name, server)
 ```
 
-`plugin.path` is the absolute installed plugin root. Each item in
+`Plugin.from_project()` uses the build plan, so its files match the source
+paths selected for packaging. `plugin.path` is the absolute installed plugin
+root. Each item in
 `plugin.skills` is an `ap.Skill` rooted at one immediate directory under
-`skills/`. Use `Path(skill)` or `skill.path` for that directory. Use `/` to
-build native paths to its instructions, references, scripts, or assets:
+`skills/`. Use `plugin.skill(name)` for exact structural lookup. Use
+`Path(skill)` or `skill.path` for that directory. Use `skill.file()` for a
+selected instruction, reference, script, or asset:
 
 ```python
-skill = plugin.skills[0]
-
-print(skill / "SKILL.md")
-print(skill / "references" / "api.md")
+print(skill.file("SKILL.md"))
+print(skill.file("references/api.md"))
 print(skill.tree(max_depth=2))
 ```
 
-Use `skill.frontmatter` for the raw source text between the `---` delimiters.
-Use `skill.body` for the Markdown source after the frontmatter. The package
-checks UTF-8 text and delimiter structure. It does not parse the frontmatter as
-YAML. The first access to either property reads and splits `SKILL.md`, then
-caches both strings. Path and tree access leave the document unread so an agent
-can choose which files and content to load.
+`skill.source` returns the complete `SKILL.md` text. Use `skill.frontmatter`
+for the raw source text between the `---` delimiters and `skill.body` for the
+Markdown after the frontmatter. The package checks UTF-8 text and delimiter
+structure. It does not parse the frontmatter as YAML. The first access to any
+source property reads and splits `SKILL.md`, then caches all three strings. Path
+and tree access leave the document unread so an agent can choose which files
+and content to load.
 
 `plugin.manifest` is an `ap.Manifest`. `plugin.mcp` is an `ap.MCPConfig` when
 `mcp.json` exists. Each object exposes `.path` immediately. Accessing a parsed
@@ -157,6 +185,27 @@ MCP servers are frozen `ap.StdioServer`, `ap.StreamableHTTPServer`, or
 non-fatal manifest violations. `mcp.issues` records invalid server entries
 skipped during loading. Document-level failures raise `ap.ValidationError` on
 parsed value access.
+
+Resolve a validated stdio server after the client creates its plugin data directory:
+
+```python
+from pathlib import Path
+import os
+
+data_dir = Path(".agent-data/my-package").resolve()
+data_dir.mkdir(parents=True, exist_ok=True)
+
+mcp = plugin.mcp
+if mcp is not None:
+    launch = mcp.resolve_stdio(
+        "my-package",
+        data_dir=data_dir,
+        base_env={"PATH": os.environ.get("PATH", "")},
+    )
+    print(launch.command, launch.args, launch.cwd)
+```
+
+The client owns data retention, process creation, permissions, logging, and the MCP lifecycle. `resolve_stdio()` returns immutable subprocess inputs and performs one-pass Agent Plugins placeholder expansion.
 
 Display the plugin to inspect its selected directory tree:
 
@@ -182,16 +231,16 @@ agent-plugins plan path/to/python-project
 
 Then verify the package through its installation boundaries:
 
-1. Build a wheel and source distribution.
+1. Build a wheel and source distribution through an adapter, or attach the Agent Plugin after an external wheel build.
 2. Build a wheel from the source distribution.
 3. Install the wheel in a clean environment.
 4. Install the Python project as editable.
-5. Call `ap.locate()` in both environments.
+5. Compare `Plugin.from_project()` with `ap.locate()` by plugin-relative file inventory and public component values.
 6. Access `plugin.manifest.name` and `plugin.mcp.servers` when MCP exists to run
    the supported Agent Plugins JSON validation.
-7. Confirm each `skill.path`, `skill / "SKILL.md"`, and `skill.files` points to
+7. Confirm each `skill.path`, `skill.file("SKILL.md")`, and `skill.files` points to
    the packaged skill tree.
-8. Access `skill.frontmatter` and `skill.body` to verify UTF-8 text and the
+8. Access `skill.source`, `skill.frontmatter`, and `skill.body` to verify UTF-8 text and the
    packaged `SKILL.md` delimiter structure.
 9. Run an Agent Skills validator to check frontmatter fields and other Agent
    Skills rules.

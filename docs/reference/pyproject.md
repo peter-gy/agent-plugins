@@ -5,7 +5,7 @@ description: Configure the authored plugin root and additional file selection.
 
 # `pyproject.toml` reference
 
-`[tool.agent-plugins]` tells the build-backend adapter where the authored plugin directory lives and which additional files to package.
+`[tool.agent-plugins]` tells `build_plan()`, build-backend adapters, and `attach_wheel(project=...)` where the authored plugin directory lives and which additional files to package.
 
 ```toml
 [tool.agent-plugins]
@@ -55,7 +55,7 @@ The final `BuildPlan.files` tuple is sorted by target POSIX path. Duplicate targ
 
 ## Source-distribution staging
 
-When the Python project directory contains `.agent-plugin/plugin.json`, the planner selects `.agent-plugin/` as the source root. The build adapter creates this reserved directory inside a source distribution so a wheel rebuilt from that artifact uses its staged plugin payload.
+When the Python project directory contains `.agent-plugin/plugin.json`, the planner selects `.agent-plugin/` as the source root. A build-backend adapter creates this reserved directory inside a source distribution so a wheel rebuilt from that artifact uses its staged plugin payload.
 
 Keep authored plugin files at the configured `root`. Treat `.agent-plugin/` as build-system staging.
 

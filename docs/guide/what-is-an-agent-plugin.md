@@ -41,7 +41,7 @@ The **build plan** is an ordered set of source-to-target file mappings. `agent-p
 
 The **`agent_plugins.json` marker** lives inside the Python distribution metadata. It records the installed plugin root and exact file inventory.
 
-A **Plugin handle** is the filesystem-backed Python object returned by `agent_plugins.locate()` or created directly with `agent_plugins.Plugin(path)`.
+A **Plugin handle** is the filesystem-backed Python object returned by `agent_plugins.locate()`, selected from a project with `Plugin.from_project()`, or created from a complete directory tree with `Plugin(path)`.
 
 ## Plugin contents
 
@@ -79,9 +79,9 @@ Several names and versions coexist by design.
 
 ## What the library owns
 
-`agent-plugins` owns file selection, artifact augmentation, installed discovery, filesystem handles, and local document validation.
+`agent-plugins` owns file selection, artifact augmentation, project and installed discovery, filesystem handles, local document validation, and transport-neutral stdio launch resolution.
 
-The agent client owns installation policy, permission prompts, placeholder expansion, MCP process startup, transport connections, and user experience. An accepted MCP server entry describes a configuration. It does not prove that the server executable or endpoint is available.
+The agent client owns installation policy, permission prompts, plugin data retention, MCP process startup, transport connections, and user experience. `resolve_stdio()` expands Agent Plugins placeholders and resolves local subprocess inputs. It does not prove that the executable can start or that an endpoint is available.
 
 Document and path validation proves supported structure and containment. Review packaged instructions and executables before installation or activation. Validation does not establish that their behavior is trustworthy.
 

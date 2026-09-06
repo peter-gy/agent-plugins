@@ -1,14 +1,14 @@
 ---
 title: CLI reference
-description: Reference agent-plugins plan, locate, and list commands, output formats, and exit statuses.
+description: Reference agent-plugins plan, attach-wheel, locate, and list commands, output formats, and exit statuses.
 ---
 
 # CLI reference
 
-The `agent-plugins` command previews package file selection and locates Agent Plugins visible in the current Python environment.
+The `agent-plugins` command previews package file selection, attaches Agent Plugins to wheels, and locates plugins visible in the current Python environment.
 
 ```text
-agent-plugins {plan,locate,list} ...
+agent-plugins {plan,attach-wheel,locate,list} ...
 ```
 
 `python -m agent_plugins` runs the same entry point.
@@ -47,6 +47,45 @@ skills/example/SKILL.md    /absolute/plugin/root/skills/example/SKILL.md
 `project`, `root`, and `source` are absolute native path strings. `target` is a plugin-root-relative POSIX path.
 
 `plan` checks configuration and selected files. It does not parse `plugin.json`, `mcp.json`, or `SKILL.md`.
+
+## `agent-plugins attach-wheel`
+
+```text
+agent-plugins attach-wheel WHEEL [--project PROJECT] [--output-dir DIRECTORY] [--json]
+```
+
+`WHEEL` identifies one existing `.whl` file. `--project` identifies the directory containing `[tool.agent-plugins]` and defaults to the current directory.
+
+Without `--output-dir`, the command atomically rewrites the input after the complete attached artifact succeeds. With `--output-dir`, it preserves the input and writes the same wheel filename into an existing directory. The command refuses to replace an existing destination.
+
+Human success output is the absolute attached wheel path and a newline:
+
+```text
+/absolute/dist/example-1.0.0-py3-none-any.whl
+```
+
+`--json` writes one object:
+
+```json
+{
+  "source": "/absolute/dist/example-1.0.0-py3-none-any.whl",
+  "output": "/absolute/dist/example-1.0.0-py3-none-any.whl",
+  "dist_info": "example-1.0.0.dist-info",
+  "plugin_root": "example-1.0.0.agent-plugin",
+  "files": [
+    "plugin.json",
+    "skills/example/SKILL.md"
+  ],
+  "replaced_existing_plugin": false,
+  "removed_signatures": []
+}
+```
+
+`source` and `output` are absolute native path strings. `dist_info`, `plugin_root`, `files`, and `removed_signatures` use POSIX archive paths. `files` remain relative to the plugin root and follow build-plan order.
+
+Attachment replaces the owned marker and payload on a rerun. If the input contains `RECORD.jws` or `RECORD.p7s`, the command removes the invalidated signatures, includes their paths in `removed_signatures`, and writes one warning per path to stderr. JSON stdout remains parseable.
+
+Expected project, plugin, wheel, ZIP, and filesystem failures produce status `1` through the standard `AgentPluginError` diagnostic. The input wheel remains byte-identical when planning, validation, source reads, ZIP writing, or replacement fails.
 
 ## `agent-plugins locate`
 

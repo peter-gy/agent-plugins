@@ -295,6 +295,20 @@ def test_mcp_accepts_supported_http_urls(tmp_path: Path, url: str) -> None:
         ({"type": "stdio", "command": ""}, "must not be empty"),
         ({"type": "stdio", "command": "bin/server"}, "begin with ./"),
         ({"type": "stdio", "command": "bin\\server"}, "begin with ./"),
+        ({"type": "stdio", "command": "C:server"}, "begin with ./"),
+        ({"type": "stdio", "command": "./C:server"}, "escapes the plugin root"),
+        (
+            {"type": "stdio", "command": "python", "cwd": "./C:/work"},
+            "escapes the plugin root",
+        ),
+        (
+            {
+                "type": "stdio",
+                "command": "python",
+                "cwd": "${PLUGIN_DATA}/C:work",
+            },
+            "escapes the plugin data directory",
+        ),
         ({"type": "stdio", "command": "server", "args": None}, "array of strings"),
         ({"type": "stdio", "command": "server", "env": []}, "object of strings"),
         ({"type": "stdio", "command": "server", "cwd": None}, "cwd to be a string"),

@@ -53,9 +53,18 @@ class Skill:
         return self._document.frontmatter
 
     @property
+    def source(self) -> str:
+        """Return the exact UTF-8 text stored in `SKILL.md`."""
+        return self._document.source
+
+    @property
     def body(self) -> str:
         """Return the raw Markdown text after the frontmatter."""
         return self._document.body
+
+    def file(self, relative_path: str | os.PathLike[str]) -> Path:
+        """Return one selected regular file below the skill root."""
+        return self._inventory.file(relative_path, kind=_KIND)
 
     def tree(
         self,
@@ -81,7 +90,7 @@ class Skill:
         )
 
     def __truediv__(self, child: str | os.PathLike[str]) -> Path:
-        """Return a native path below the skill root."""
+        """Join `child` to the skill root with native `Path` semantics."""
         return self.path / child
 
     def __fspath__(self) -> str:

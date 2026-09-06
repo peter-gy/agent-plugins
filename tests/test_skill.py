@@ -80,8 +80,10 @@ def test_skill_lazily_splits_and_caches_its_source_text(tmp_path: Path) -> None:
         b"---\r\nname: first\r\ndescription: First version\r\n---\r\n\r\n# First\r\n",
     )
 
-    assert skill.frontmatter == "name: first\r\ndescription: First version\r\n"
-    assert skill.body == "\r\n# First\r\n"
+    expected_source = (
+        "---\r\nname: first\r\ndescription: First version\r\n---\r\n\r\n# First\r\n"
+    )
+    assert skill.source == expected_source
 
     _write_skill(
         root,
@@ -89,10 +91,12 @@ def test_skill_lazily_splits_and_caches_its_source_text(tmp_path: Path) -> None:
     )
     assert skill.frontmatter == "name: first\r\ndescription: First version\r\n"
     assert skill.body == "\r\n# First\r\n"
+    assert skill.source == expected_source
 
     refreshed = ap.Skill(root)
     assert refreshed.frontmatter == "name: second\ndescription: Second version\n"
     assert refreshed.body == "# Second\n"
+    assert refreshed.source.endswith("# Second\n")
 
 
 def test_skill_preserves_frontmatter_as_text(tmp_path: Path) -> None:
@@ -117,6 +121,9 @@ def test_skill_allows_an_empty_markdown_body(tmp_path: Path) -> None:
 
     skill = ap.Skill(root)
 
+    assert skill.source == (
+        "---\nname: demo\ndescription: Demonstrate the package\n---"
+    )
     assert skill.frontmatter == ("name: demo\ndescription: Demonstrate the package\n")
     assert skill.body == ""
 
@@ -149,18 +156,89 @@ def test_skill_caches_structural_errors(tmp_path: Path) -> None:
     _write_skill(root, b"# Demo\n")
     skill = ap.Skill(root)
 
-    with pytest.raises(ap.ValidationError) as first:
-        _body = skill.body
+    with pytest.raises(ap.ValidationError) as source_error:
+        _source = skill.source
 
     _write_skill(
         root,
         b"---\nname: repaired\ndescription: Repaired\n---\n# Repaired\n",
     )
-    with pytest.raises(ap.ValidationError) as second:
+    with pytest.raises(ap.ValidationError) as frontmatter_error:
+        _frontmatter = skill.frontmatter
+    with pytest.raises(ap.ValidationError) as body_error:
         _body = skill.body
 
-    assert first.value is second.value
+    assert source_error.value is frontmatter_error.value is body_error.value
     assert ap.Skill(root).body == "# Repaired\n"
+
+
+def test_skill_file_returns_selected_resources(tmp_path: Path) -> None:
+    root = _skill_root(tmp_path)
+    skill = ap.Skill(root)
+
+    assert skill.file("SKILL.md") == (root / "SKILL.md").resolve()
+    assert (
+        skill.file("references/guide&notes.md")
+        == (root / "references" / "guide&notes.md").resolve()
+    )
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        "",
+        ".",
+        "../outside.md",
+        "references\\guide&notes.md",
+        "/outside.md",
+        "C:outside.md",
+        "references",
+        "missing.md",
+    ],
+)
+def test_skill_file_rejects_invalid_or_unselected_paths(
+    tmp_path: Path, relative_path: str
+) -> None:
+    skill = ap.Skill(_skill_root(tmp_path))
+
+    with pytest.raises(ap.AgentPluginError) as captured:
+        skill.file(relative_path)
+
+    message = str(captured.value)
+    assert str(skill.path) in message
+    if relative_path:
+        assert relative_path in message or repr(relative_path) in message
+    else:
+        assert "''" in message
+
+
+def test_skill_file_rejects_files_added_after_construction(tmp_path: Path) -> None:
+    root = _skill_root(tmp_path)
+    skill = ap.Skill(root)
+    added = root / "references" / "added.md"
+    added.write_text("# Added\n", encoding="utf-8")
+
+    with pytest.raises(ap.AgentPluginError, match="not selected"):
+        skill.file("references/added.md")
+
+
+def test_skill_file_revalidates_selected_containment(tmp_path: Path) -> None:
+    root = _skill_root(tmp_path)
+    skill = ap.Skill(root)
+    selected = root / "references" / "guide&notes.md"
+    selected.unlink()
+    outside = tmp_path / "outside.md"
+    outside.write_text("# Outside\n", encoding="utf-8")
+    selected.symlink_to(outside)
+
+    with pytest.raises(ap.AgentPluginError, match="cannot be resolved"):
+        skill.file("references/guide&notes.md")
+
+
+def test_skill_path_join_remains_unchecked(tmp_path: Path) -> None:
+    skill = ap.Skill(_skill_root(tmp_path))
+
+    assert skill / "../outside.md" == skill.path / "../outside.md"
 
 
 def test_skill_requires_exact_uppercase_instruction_file(tmp_path: Path) -> None:

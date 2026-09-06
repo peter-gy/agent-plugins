@@ -22,7 +22,7 @@ Construct a direct `Plugin` handle and access the fields your consumers use:
 ```python
 import agent_plugins as ap
 
-plugin = ap.Plugin(".")
+plugin = ap.Plugin.from_project("packages/python")
 print(plugin.manifest.name)
 print(plugin.manifest.issues)
 
@@ -36,7 +36,9 @@ if plugin.mcp is not None:
 
 This validates the supported Agent Plugins JSON fields and the `SKILL.md` text structure. Use an [Agent Skills](https://agentskills.io/specification) validator to check YAML fields and other Agent Skills rules.
 
-## 3. Build both artifacts
+## 3. Create the artifacts
+
+With a build-backend adapter, build the wheel and source distribution:
 
 ```console
 uv build packages/python --out-dir dist
@@ -44,9 +46,21 @@ uv build packages/python --out-dir dist
 
 The output should contain one wheel and one `.tar.gz` source distribution.
 
+When another build tool owns the wheel, attach the Agent Plugin after that build. Use a separate output directory when you want to compare the source and attached artifacts:
+
+```console
+mkdir -p dist/attached
+agent-plugins attach-wheel dist/my_project-0.1.0-py3-none-any.whl \
+  --project packages/python \
+  --output-dir dist/attached \
+  --json
+```
+
+Inspect `files`, `replaced_existing_plugin`, and `removed_signatures` in the result. Install `dist/attached/my_project-0.1.0-py3-none-any.whl` in the remaining checks.
+
 ## 4. Rebuild from the source distribution
 
-Build a wheel from the sdist into a separate directory:
+For the build-backend path, build a wheel from the source distribution into a separate directory:
 
 ```console
 uv build \
@@ -58,21 +72,33 @@ The rebuilt wheel should expose the same Agent Plugin target paths as the direct
 
 ## 5. Inspect a clean installation
 
-Install the direct wheel in an isolated temporary environment and inspect it:
+Set the wheel path for the artifact workflow:
+
+```console
+wheel=dist/my_project-0.1.0-py3-none-any.whl
+```
+
+For an external build with the separate attachment directory, use:
+
+```console
+wheel=dist/attached/my_project-0.1.0-py3-none-any.whl
+```
+
+Install the selected wheel in an isolated temporary environment and inspect it:
 
 ```console
 uv run --no-project --isolated --no-cache \
   --with agent-plugins \
-  --with dist/my_project-0.1.0-py3-none-any.whl \
+  --with "$wheel" \
   agent-plugins locate my-project
 
 uv run --no-project --isolated --no-cache \
   --with agent-plugins \
-  --with dist/my_project-0.1.0-py3-none-any.whl \
+  --with "$wheel" \
   agent-plugins list --json
 ```
 
-Repeat the commands with `dist/from-sdist/my_project-0.1.0-py3-none-any.whl`. Then access `plugin.manifest.name`, each skill document, and `plugin.mcp.servers` from Python. File location and document validation are separate checks.
+For the build-backend path, repeat the commands with `dist/from-sdist/my_project-0.1.0-py3-none-any.whl`. Then access `plugin.manifest.name`, each skill document, and `plugin.mcp.servers` from Python. File location and document validation are separate checks.
 
 ## 6. Inspect an editable installation
 

@@ -47,7 +47,7 @@ The associated manifest is validated before the MCP document.
 | `env` | No | `{}` | Object with string values, exposed as a read-only mapping |
 | `cwd` | No | `null` | Accepted working-directory form |
 
-A bare command contains no slash, backslash, or NUL. A `./` command must resolve inside the plugin root. Existence and executability are runtime concerns for the agent client.
+A bare command contains no slash, backslash, NUL, or Windows drive prefix. A `./` command must resolve inside the plugin root during parsing. `MCPConfig.resolve_stdio()` then requires a regular file. Configuration obtained through a `Plugin` also requires that file in the selected inventory. Executable format and permissions remain runtime concerns for the agent client.
 
 `env` cannot define the exact reserved keys `PLUGIN_ROOT` or `PLUGIN_DATA`.
 
@@ -57,9 +57,11 @@ Accepted `cwd` forms are:
 - `${PLUGIN_ROOT}` or a path below it.
 - `${PLUGIN_DATA}` or a path below it.
 
-Traversal outside either managed root is rejected. An unknown stdio field invalidates the server entry.
+Traversal outside either managed root is rejected. `resolve_stdio()` expands these values, requires the resulting working directory, and rechecks containment. An unknown stdio field invalidates the server entry.
 
 The normalized value is `StdioServer(command, args=(), env={}, cwd=None)` with class attribute `type == "stdio"`.
+
+Use [`MCPConfig.resolve_stdio()`](/integrations/mcp-servers#resolve-a-stdio-launch) to convert one validated entry into immutable subprocess inputs.
 
 ## `streamable-http`
 

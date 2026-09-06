@@ -142,4 +142,4 @@ my-project
 /path/to/site-packages/my_project-0.1.0.agent-plugin/skills/use-my-project/SKILL.md
 ```
 
-`plugin.manifest.name` reads and validates `plugin.json` on first access. Learn how the three artifact modes differ in [How packaging works](/guide/artifact-lifecycle).
+`plugin.manifest.name` reads and validates `plugin.json` on first access. Use [Inspect an authored project](/guide/inspect-project) to open the exact build selection before installation. Learn how the three artifact modes differ in [How packaging works](/guide/artifact-lifecycle).

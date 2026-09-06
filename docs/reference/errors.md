@@ -19,7 +19,7 @@ classDiagram
 
 </div>
 
-`AgentPluginError` covers missing distributions, markers, roots, required files, unsafe selected paths, build-plan failures, and archive failures.
+`AgentPluginError` covers missing distributions, markers, roots, required files, unsafe selected paths, build-plan failures, archive failures, component lookup, and stdio launch resolution.
 
 `ValidationError` covers fatal JSON, schema, manifest, MCP, and skill-document failures. It exposes:
 

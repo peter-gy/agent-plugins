@@ -5,7 +5,7 @@ description: Follow Agent Plugin files through build planning, wheels, source di
 
 # How packaging works
 
-The built distribution is one release boundary for library code and Agent Plugin files. The build-backend adapter asks the configured Python backend to create an artifact, then augments that artifact with selected plugin files from the same source revision: the manifest, any skills and MCP configuration, and included client extension files.
+The built distribution is one release boundary for library code and Agent Plugin files. A build-backend adapter can create and augment the artifact in one path. `attach_wheel()` can augment a wheel that another build tool already produced. Both use selected plugin files from the same source revision: the manifest, any skills and MCP configuration, and included client extension files.
 
 Run library tests and evaluate the Agent Plugin against that artifact before publishing it. Installing or rolling back one distribution version moves the packaged code and plugin together.
 
@@ -13,7 +13,7 @@ A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribut
 
 ## Build planning
 
-Every wheel, source distribution, and editable build starts with `build_plan()` in the Python project directory.
+Build-backend adapters call `build_plan()` in the Python project directory. `attach_wheel()` does the same when `plan` is omitted. A caller with another configuration source can pass a validated `BuildPlan` directly.
 
 The plan resolves `[tool.agent-plugins].root` and selects:
 
@@ -41,7 +41,11 @@ site-packages/
     └── skills/
 ```
 
-The adapter updates the wheel [`RECORD`](https://packaging.python.org/en/latest/specifications/recording-installed-packages/#the-record-file), the metadata table that lists installed paths, hashes, and byte sizes. Added files preserve executable mode bits.
+The adapter and `attach_wheel()` use the same wheel rewrite. It updates [`RECORD`](https://packaging.python.org/en/latest/specifications/recording-installed-packages/#the-record-file), the metadata table that lists installed paths, hashes, and byte sizes. Added files preserve executable mode bits.
+
+The rewrite preserves the wheel's outer file mode, archive comment, and non-owned members. It removes invalidated `RECORD.jws` and `RECORD.p7s` signatures and reports their paths through `WheelAttachment`. A rerun replaces the owned marker and payload deterministically.
+
+Direct attachment rewrites the input after a complete temporary artifact succeeds. Passing `output_dir` preserves the input and writes the same wheel filename into an existing destination directory. See [Attach a prebuilt wheel](/guide/attach-wheel) for the complete operation.
 
 The built distribution receives no runtime dependency on `agent-plugins` unless you declare one in `[project].dependencies`.
 
