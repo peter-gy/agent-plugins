@@ -1,0 +1,20 @@
+src/agent_plugins/_build/wheel.py
+  s_9d8d642da5f514::t_37cb37c71eb3d2 387-390,411-418
+  s_9d8d642da5f514::t_fbd4856f1cad1e 327
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "621052cf598693cd8e28276fb5c4f04ff7fc9d82",
+  "prompts": {},
+  "sessions": {
+    "s_9d8d642da5f514": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07648-e892-7c80-bc76-6e8460af048c",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
