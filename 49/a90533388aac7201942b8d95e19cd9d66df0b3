@@ -1,0 +1,24 @@
+tests/test_plugin.py
+  s_b3cd18c16ff172::t_8a6ec7aecf82fd 212,231
+tests/test_docs.py
+  s_b3cd18c16ff172::t_8a6ec7aecf82fd 27
+tests/test_mcp_resolution.py
+  s_b3cd18c16ff172::t_e7ab430aa44093 406-408
+  s_b3cd18c16ff172::t_8a6ec7aecf82fd 415-416
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "49a90533388aac7201942b8d95e19cd9d66df0b3",
+  "prompts": {},
+  "sessions": {
+    "s_b3cd18c16ff172": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a07c97-82e7-76c1-8acd-352ded5afd83",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
