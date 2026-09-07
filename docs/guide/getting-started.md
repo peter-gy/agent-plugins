@@ -1,16 +1,16 @@
 ---
 title: Get started
-description: Package an Agent Skill in a wheel and locate the installed Agent Plugin.
+description: Build a Python library with an Agent Skill, install the wheel, and read its instructions from Python.
 ---
 
-# Package and locate your first Agent Plugin
+# Package and use your first Agent Plugin
 
-Create a Python distribution that carries an Agent Plugin beside the library it extends. This minimal plugin contains one Agent Skill. The completed flow builds one wheel, installs it, and locates the plugin from that installed distribution.
+Build a Python library with instructions for using it. Install the resulting wheel, then read the packaged skill and call the library from the same Python environment.
 
 ## Prerequisites
 
 - Python 3.10 through 3.14.
-- The [uv package manager](https://docs.astral.sh/uv/) with its `uv build` command.
+- The [uv package manager](https://docs.astral.sh/uv/) for building and creating temporary environments. The commands download their declared dependencies.
 
 ## Create the project
 
@@ -32,29 +32,37 @@ my-project/
 
 Create `plugin.json` at the plugin root:
 
-```json
+```json [plugin.json]
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "my-project"
 }
 ```
 
-Create `skills/use-my-project/SKILL.md`:
+Write `skills/use-my-project/SKILL.md`. An [Agent Skill](https://agentskills.io/specification) provides instructions, metadata, and optional supporting resources:
 
-```md
+```md [skills/use-my-project/SKILL.md]
 ---
 name: use-my-project
-description: Use my-project to process project records.
+description: Use my-project to greet a person by name.
 ---
 
 # Use my-project
 
-Import `my_project` and call its public API.
+Import `greet` from `my_project` and call it with the person's name.
+The function returns a greeting string.
 ```
 
-Create an empty `packages/python/src/my_project/__init__.py`, then configure `packages/python/pyproject.toml`:
+Create the library in `packages/python/src/my_project/__init__.py`:
 
-```toml
+```python [packages/python/src/my_project/__init__.py]
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+```
+
+Configure `packages/python/pyproject.toml`. The [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/) builds the Python package, and the `agent-plugins` adapter adds the selected plugin files:
+
+```toml [packages/python/pyproject.toml]
 [project]
 name = "my-project"
 version = "0.1.0"
@@ -68,78 +76,60 @@ build-backend = "agent_plugins.build.uv_build"
 root = "../.."
 ```
 
-`root` starts at the directory containing `pyproject.toml`. The value `../..` resolves to `my-project/`, where `plugin.json` lives.
-
-## Inspect the build plan
-
-Run the inspection command in a temporary uv environment and print the Agent Plugin build plan:
-
-```console
-uv run --with agent-plugins agent-plugins plan packages/python
-```
-
-The output begins with the resolved authored plugin root, followed by one target and source path per selected file:
-
-```text
-root    /path/to/my-project
-plugin.json    /path/to/my-project/plugin.json
-skills/use-my-project/SKILL.md    /path/to/my-project/skills/use-my-project/SKILL.md
-```
-
-The command separates columns with tabs and prints absolute local paths. Add `--json` when another program consumes the plan.
-
-::: info Selection before validation
-`plan` checks project configuration, selected paths, and containment. It does not parse `plugin.json` or validate the Agent Skills frontmatter.
-:::
+`root` resolves from the directory containing `pyproject.toml`. Here it reaches `my-project/`, where `plugin.json` lives.
 
 ## Build and install
 
-Build the wheel and source distribution from the repository root:
+Run from `my-project/`:
 
 ```console
+uv run --with agent-plugins agent-plugins plan packages/python
 uv build packages/python --out-dir dist
 ```
 
-Install the wheel in a temporary environment with `agent-plugins`, then locate its Agent Plugin:
+`plan` lists the manifest and skill selected for packaging. It checks paths and containment. Document validation happens when the Python API reads content.
+
+The build creates a [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/), an installable archive, and a [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/) from which another wheel can be built.
+
+Open Python in a temporary environment containing the wheel and the inspection library:
 
 ```console
 uv run \
   --with agent-plugins \
   --with dist/my_project-0.1.0-py3-none-any.whl \
-  agent-plugins locate my-project
+  python
 ```
 
-The command prints an absolute plugin root inside uv's temporary environment, similar to:
+## Read the skill and use the library
+
+Run in that Python session:
+
+```python
+import agent_plugins as ap
+from my_project import greet
+
+plugin = ap.locate("my-project")
+skill = plugin.skill("use-my-project")
+
+print(skill.source)
+print(greet("Ada"))
+```
+
+The first print shows the packaged instructions. The final line is:
 
 ```text
-/path/to/site-packages/my_project-0.1.0.agent-plugin
+Hello, Ada!
 ```
 
-The `.agent-plugin` directory and the importable `my_project` package share the wheel's distribution version. A compatible client can discover the plugin immediately from the installed metadata.
+The importable library and the skill came from the same wheel. An agent with Python execution can read the instructions through this API, then use the library for its task. The host agent controls which instructions to load and which code to run.
 
-## Inspect from application code
+## Apply this to your library
 
-Add `agent-plugins` to the runtime dependencies of a Python project that needs to inspect its own or another installed distribution:
+Keep `agent-plugins` in `[build-system].requires` for packaging. Add it to runtime dependencies when your installed Python code calls the inspection API:
 
 ```toml
 [project]
 dependencies = ["agent-plugins"]
 ```
 
-Then inspect the installation from Python:
-
-```python
-import agent_plugins as ap
-
-plugin = ap.locate("my-project")
-
-print(plugin.manifest.name)
-print(plugin.skills[0] / "SKILL.md")
-```
-
-```text
-my-project
-/path/to/site-packages/my_project-0.1.0.agent-plugin/skills/use-my-project/SKILL.md
-```
-
-`plugin.manifest.name` reads and validates `plugin.json` on first access. Use [Inspect an authored project](/guide/inspect-project) to open the exact build selection before installation. Learn how the three artifact modes differ in [How packaging works](/guide/artifact-lifecycle).
+Use the [Hatchling adapter](/guide/build-backends#hatchling) for Hatchling builds or [attach a prebuilt wheel](/guide/attach-wheel) when another tool produces the artifact. Use [project inspection](/guide/inspect-project) before building and [package verification](/guide/verify-package) before publishing.

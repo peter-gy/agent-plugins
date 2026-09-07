@@ -5,19 +5,26 @@ description: Ship a Python library and its Agent Plugin in one versioned distrib
 
 # What is an Agent Plugin?
 
-An **agent client** is an application that loads agent instructions and integrations. [Agent Skills](https://agentskills.io/specification) provide reusable instructions and resources. [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) servers connect agents to tools and services. Both can be reused across clients, yet each client's native plugin format may place and describe them differently.
+An [Agent Plugin](https://agent-plugins.org/) is a directory with a `plugin.json` manifest and optional components. [Agent Skills](https://agentskills.io/specification) provide instructions and resources. [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) server declarations describe connections to tools and services. Namespaced [client extensions](/integrations/client-extensions) hold client-specific data and files.
 
-[Agent Plugins](https://agent-plugins.org/) defines one small package contract: a `plugin.json` manifest, fixed locations for skills and MCP server configuration, and namespaced [client extensions](/integrations/client-extensions). Plugin authors maintain one structure. Compatible clients discover the same structure and load the parts they support.
+`agent-plugins` packages that directory with a Python library. An agent that can execute Python can read the library's packaged instructions, then compose calls to its API for a task. The same workflow applies to a short script, an interactive session, or a notebook.
 
-The specification leaves distribution and installation to clients. `agent-plugins` carries that directory through Python packaging beside the library it extends. A regular wheel installs the code and plugin together. An editable wheel points discovery at the authored plugin directory. The Python API and command-line interface (CLI) locate either form through the installed distribution metadata.
+With `agent-plugins` [installed](/guide/inspect-installed), read its own packaged skill:
 
-A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) is an installable Python archive. A [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/) carries source files for a build frontend to turn into a wheel.
+```python
+import agent_plugins as ap
+
+plugin = ap.locate("agent-plugins")
+print(plugin.skill("agent-plugins").source)
+```
+
+An **agent client** is the application hosting the model and its execution tools. It decides which instructions to load and which components to activate. The Python API supplies files, text, validated configuration, and subprocess inputs for that integration.
 
 ## One release boundary
 
 The built distribution captures the library code and selected Agent Plugin files from the same source revision. Run library tests and evaluate the plugin against that build, then publish one distribution version. Installing another version replaces both packaged surfaces together.
 
-For users and agents, install the Python distribution once. The Agent Plugin is immediately available for compatible clients to discover. A code-mode agent can call `agent_plugins.locate()` and inspect the same packaged manifest, skills, MCP configuration, and client extension files through native Python paths.
+A [wheel](https://packaging.python.org/en/latest/specifications/binary-distribution-format/) is the installable archive carrying both code and plugin. A [source distribution](https://packaging.python.org/en/latest/specifications/source-distribution-format/) carries the source for rebuilding that wheel. An editable installation points discovery at the authored plugin directory.
 
 ## The lifecycle
 
@@ -25,12 +32,9 @@ For users and agents, install the Python distribution once. The Agent Plugin is 
 
 ```mermaid
 flowchart TD
-    author[Python project<br/>Library code and Agent Plugin directory] --> plan[Build plan]
-    plan --> modes[Regular wheel<br/>Source distribution<br/>Editable wheel]
-    modes --> install[Installed library, Agent Plugin, and marker]
-    install --> discovery[Marker-based discovery]
-    discovery --> handle[Plugin handle and file inventory]
-    handle --> documents[Lazy manifest, skill, and MCP access]
+    author[Author library code<br/>and plugin instructions] --> build[Build one distribution]
+    build --> install[Install library and plugin together]
+    install --> use[Read the skill from Python<br/>and call the library]
 ```
 
 </div>
@@ -38,8 +42,6 @@ flowchart TD
 The **authored plugin directory** is the directory you maintain. Its root contains `plugin.json`.
 
 The **build plan** is an ordered set of source-to-target file mappings. `agent-plugins plan` shows this selection before a build.
-
-The **`agent_plugins.json` marker** lives inside the Python distribution metadata. It records the installed plugin root and exact file inventory.
 
 A **Plugin handle** is the filesystem-backed Python object returned by `agent_plugins.locate()`, selected from a project with `Plugin.from_project()`, or created from a complete directory tree with `Plugin(path)`.
 
@@ -57,8 +59,6 @@ A plugin directory has one required file and three optional content surfaces.
 `plugin.json.extensions` is **manifest extension data**. It is namespaced JSON inside the manifest. Client extension files are separate files in the plugin directory.
 
 ## Identities and versions
-
-Several names and versions coexist by design.
 
 <table class="identity-table">
   <thead><tr><th>Term</th><th>Source</th><th>Used by</th></tr></thead>
