@@ -126,7 +126,7 @@ The command uses tabs for indentation and columns. An environment with no marked
 
 The `skills` field contains absolute `SKILL.md` paths. An empty result is `[]`.
 
-`list` is fail-fast. One marked distribution with unusable metadata or selected files stops the complete scan.
+`list` follows Python metadata discovery precedence for equivalent distribution names, matching `locate`. It is fail-fast. A selected marked distribution with unusable metadata or files stops the complete scan.
 
 ## Output and exit statuses
 

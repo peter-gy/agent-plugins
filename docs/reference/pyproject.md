@@ -55,7 +55,7 @@ The final `BuildPlan.files` tuple is sorted by target POSIX path. Duplicate targ
 
 ## Source-distribution staging
 
-When the Python project directory contains `.agent-plugin/plugin.json`, the planner selects `.agent-plugin/` as the source root. A build-backend adapter creates this reserved directory inside a source distribution so a wheel rebuilt from that artifact uses its staged plugin payload.
+When the Python project directory contains `.agent-plugin/plugin.json`, the planner selects every regular file in `.agent-plugin/`. A build-backend adapter creates this reserved directory inside a source distribution to capture the authored selection. A wheel rebuilt from that artifact uses the captured files directly.
 
 Keep authored plugin files at the configured `root`. Treat `.agent-plugin/` as build-system staging.
 

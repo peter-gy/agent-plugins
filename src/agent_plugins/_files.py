@@ -130,7 +130,7 @@ def _resolve_root(
     candidate = Path(path)
     try:
         root = candidate.resolve(strict=True)
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise AgentPluginError(
             f"{kind} root cannot be resolved: {candidate}"
         ) from error

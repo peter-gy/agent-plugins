@@ -32,9 +32,11 @@ class Skill:
         _set_state(self, inventory)
 
     @classmethod
-    def _from_inventory(cls, inventory: FileInventory) -> Skill:
+    def _from_inventory(
+        cls, inventory: FileInventory, *, document: SkillDocument | None = None
+    ) -> Skill:
         skill = object.__new__(cls)
-        _set_state(skill, inventory)
+        _set_state(skill, inventory, document=document)
         return skill
 
     @property
@@ -121,6 +123,8 @@ class Skill:
 def _set_state(
     skill: Skill,
     inventory: FileInventory,
+    *,
+    document: SkillDocument | None = None,
 ) -> None:
     skill._inventory = inventory
-    skill._document = SkillDocument(inventory.root / _INSTRUCTIONS)
+    skill._document = document if document is not None else SkillDocument(inventory)

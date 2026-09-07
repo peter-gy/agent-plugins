@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import base64
-import csv
-import hashlib
 import importlib
 import json
 import stat
@@ -12,6 +9,7 @@ from pathlib import Path
 from typing import Protocol, cast
 
 import pytest
+from wheel_assertions import assert_wheel_record
 
 import agent_plugins as ap
 from agent_plugins._build.sdist import write_sdist_plugin
@@ -94,7 +92,7 @@ def test_backend_builds_regular_sdist_and_editable_plugins(
             name.startswith("demo_provider-1.2.3.agent-plugin/")
             for name in archive.namelist()
         )
-    _assert_record(editable)
+    assert_wheel_record(editable)
 
 
 def test_sdist_rewrite_preserves_outer_mode(tmp_path: Path) -> None:
@@ -110,6 +108,39 @@ def test_sdist_rewrite_preserves_outer_mode(tmp_path: Path) -> None:
     write_sdist_plugin(source, ap.build_plan(project))
 
     assert stat.S_IMODE(source.stat().st_mode) == source_mode
+
+
+def test_sdist_rewrite_replaces_the_canonical_staged_inventory(
+    tmp_path: Path,
+) -> None:
+    project, _root = _project(tmp_path, "uv_build")
+    source = tmp_path / "demo-provider-1.2.3.tar.gz"
+    archive_root = "demo-provider-1.2.3"
+    content = tmp_path / "content.txt"
+    content.write_text("source bytes\n", encoding="utf-8")
+    stage = f"./{archive_root}//.agent-plugin"
+    with tarfile.open(source, "w:gz") as archive:
+        archive.add(content, f"{stage}/skills/previous/SKILL.md")
+        archive.add(content, f"./{archive_root}/original.txt")
+        archive.add(project / "pyproject.toml", f"{archive_root}/pyproject.toml")
+
+    expected = ap.build_plan(project)
+    write_sdist_plugin(source, expected)
+
+    extracted = tmp_path / "extracted"
+    with tarfile.open(source, "r:gz") as archive:
+        archive.extractall(extracted, filter="data")
+    rebuilt = ap.Plugin(extracted / archive_root / ".agent-plugin")
+    assert {path.relative_to(rebuilt.path).as_posix() for path in rebuilt.files} == {
+        "bin/server.py",
+        "mcp.json",
+        "plugin.json",
+        "skills/demo/SKILL.md",
+        "skills/demo/references/guide.md",
+    }
+    assert (extracted / archive_root / "original.txt").read_bytes() == (
+        content.read_bytes()
+    )
 
 
 def _assert_regular_wheel(wheel: Path, *, executable_mode: int) -> dict[str, bytes]:
@@ -136,27 +167,8 @@ def _assert_regular_wheel(wheel: Path, *, executable_mode: int) -> dict[str, byt
             if name.startswith(f"{prefix}/")
         }
     assert payload.keys() == expected
-    _assert_record(wheel)
+    assert_wheel_record(wheel)
     return payload
-
-
-def _assert_record(wheel: Path) -> None:
-    with zipfile.ZipFile(wheel) as archive:
-        dist_info = _dist_info(archive)
-        record_name = f"{dist_info}/RECORD"
-        rows = list(csv.reader(archive.read(record_name).decode().splitlines()))
-        files = {name for name in archive.namelist() if not name.endswith("/")}
-        row_names = [row[0] for row in rows]
-        assert len(row_names) == len(set(row_names))
-        assert set(row_names) == files
-        for name, digest, size in rows:
-            if name == record_name:
-                assert (digest, size) == ("", "")
-                continue
-            value = archive.read(name)
-            encoded = base64.urlsafe_b64encode(hashlib.sha256(value).digest())
-            assert digest == f"sha256={encoded.rstrip(b'=').decode()}"
-            assert size == str(len(value))
 
 
 def _dist_info(archive: zipfile.ZipFile) -> str:
@@ -198,7 +210,7 @@ packages = ["src/demo_provider"]
 
 [tool.agent-plugins]
 root = "../.."
-include = ["bin/**"]
+include = ["bin/**", "empty-assets/**"]
 """,
         encoding="utf-8",
     )
@@ -222,6 +234,7 @@ include = ["bin/**"]
     (skill / "references" / "guide.md").write_text("# Guide\n", encoding="utf-8")
     binary = root / "bin"
     binary.mkdir()
+    (root / "empty-assets").mkdir()
     server = binary / "server.py"
     server.write_text("print('demo')\n", encoding="utf-8")
     server.chmod(0o755)

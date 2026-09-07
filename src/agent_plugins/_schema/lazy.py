@@ -43,5 +43,6 @@ class LazyResult(Generic[T]):
                 self._error = error
                 raise
             finally:
-                self._loader = None
+                if self._value is not _UNSET or self._error is not _UNSET:
+                    self._loader = None
         return self._value

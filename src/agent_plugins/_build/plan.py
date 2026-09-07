@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import cast
 
 if sys.version_info >= (3, 11):
@@ -38,7 +38,7 @@ def build_plan(project: str | Path = ".") -> BuildPlan:
     """Load project configuration and return its complete plugin file plan."""
     try:
         project_path = Path(project).resolve()
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise AgentPluginError(
             f"Project path cannot be resolved: {project}. Check the path and retry."
         ) from error
@@ -63,10 +63,11 @@ def build_plan(project: str | Path = ".") -> BuildPlan:
 
     staged = project_path / STAGED_ROOT
     configured = project_path / root_value
-    source_root = staged if (staged / "plugin.json").is_file() else configured
+    is_staged = (staged / "plugin.json").is_file()
+    source_root = staged if is_staged else configured
     try:
         root = source_root.resolve(strict=True)
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise AgentPluginError(
             f"Agent Plugin root cannot be resolved: {source_root}"
         ) from error
@@ -75,16 +76,71 @@ def build_plan(project: str | Path = ".") -> BuildPlan:
 
     files: dict[PurePosixPath, Path] = {}
     _add_file(files, root, root / "plugin.json", required=True)
-    _add_tree(files, root, root / "skills")
-    _add_file(files, root, root / "mcp.json", required=False)
-    for pattern in include:
-        _add_pattern(files, root, pattern)
+    if is_staged:
+        _add_tree(files, root, root)
+    else:
+        _add_tree(files, root, root / "skills")
+        _add_file(files, root, root / "mcp.json", required=False)
+        for pattern in include:
+            _add_pattern(files, root, pattern)
 
     mappings = tuple(
         FileMapping(source=source, target=target)
         for target, source in sorted(files.items(), key=lambda item: item[0].as_posix())
     )
     return BuildPlan(project=project_path, root=root, files=mappings)
+
+
+def validate_plan(plan: BuildPlan) -> tuple[PurePosixPath, ...]:
+    """Check that a plan can produce a discoverable plugin payload."""
+    files: list[PurePosixPath] = []
+    seen: set[PurePosixPath] = set()
+    for mapping in plan.files:
+        target = mapping.target
+        value = target.as_posix()
+        if (
+            target.is_absolute()
+            or PureWindowsPath(value).drive
+            or not target.parts
+            or ".." in target.parts
+            or "\\" in value
+            or "\x00" in value
+        ):
+            raise AgentPluginError(
+                f"Plugin target must stay within the plugin root: {value!r}"
+            )
+        if target in seen:
+            raise AgentPluginError(f"Plugin plan contains a duplicate target: {value}")
+        collision = next(
+            (
+                existing
+                for existing in seen
+                if existing in target.parents or target in existing.parents
+            ),
+            None,
+        )
+        if collision is not None:
+            raise AgentPluginError(
+                "Plugin plan contains file-directory target collisions: "
+                f"{collision.as_posix()} and {value}"
+            )
+        seen.add(target)
+        try:
+            source = mapping.source.resolve(strict=True)
+        except (OSError, RuntimeError, ValueError) as error:
+            raise AgentPluginError(
+                f"Plugin file cannot be read: {mapping.source}. "
+                "Restore the file and retry."
+            ) from error
+        if not source.is_file():
+            raise AgentPluginError(
+                f"Plugin source is not a file: {source}. "
+                "Select a regular file and retry."
+            )
+        files.append(target)
+    if PurePosixPath("plugin.json") not in seen:
+        raise AgentPluginError("Plugin plan must include plugin.json")
+    return tuple(files)
 
 
 def _config(document: dict[str, object], pyproject: Path) -> dict[str, object]:
@@ -133,6 +189,8 @@ def _add_tree(files: dict[PurePosixPath, Path], root: Path, directory: Path) -> 
         return
     if not directory.is_dir():
         raise AgentPluginError(f"Expected a directory: {directory}")
+    if directory.is_symlink():
+        raise AgentPluginError(f"Directory symlinks cannot be packaged: {directory}")
     for candidate in directory.rglob("*"):
         if candidate.is_symlink() and candidate.is_dir():
             raise AgentPluginError(

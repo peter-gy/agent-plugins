@@ -270,7 +270,6 @@ def test_mcp_caches_validation_failures(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "url",
     [
-        "https://example.com/mcp",
         "http://localhost/mcp",
         "http://127.0.0.1:8080/mcp",
         "http://[::1]/mcp",

@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-import base64
-import csv
-import hashlib
 import json
 import os
+import shutil
 import stat
+import subprocess
+import sys
 import warnings
 import zipfile
 from pathlib import Path, PurePosixPath
 from typing import IO, Any
 
 import pytest
+from wheel_assertions import assert_wheel_record
 
 import agent_plugins as ap
 
@@ -29,7 +30,6 @@ def test_attach_wheel_reads_current_project_configuration(
 
     result = ap.attach_wheel(wheel)
 
-    assert isinstance(result, ap.WheelAttachment)
     assert result.files == (
         PurePosixPath("plugin.json"),
         PurePosixPath("skills/demo/SKILL.md"),
@@ -129,7 +129,7 @@ def test_in_place_attachment_returns_resolved_artifact_details(tmp_path: Path) -
     with zipfile.ZipFile(wheel) as archive:
         assert f"{DIST_INFO}/RECORD.jws" not in archive.namelist()
         assert f"{DIST_INFO}/RECORD.p7s" not in archive.namelist()
-    _assert_record(wheel)
+    assert_wheel_record(wheel)
 
 
 def test_output_directory_preserves_source_and_refuses_overwrite(
@@ -219,6 +219,93 @@ def test_existing_marker_or_payload_reports_replacement(
     assert result.replaced_existing_plugin is True
 
 
+@pytest.mark.parametrize("scheme", ["purelib", "platlib"])
+def test_attachment_installs_selected_payload_over_relocated_plugin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, scheme: str
+) -> None:
+    uv = shutil.which("uv")
+    if uv is None:
+        pytest.skip("uv is required for wheel installation")
+    plan = _plan(tmp_path, ("plugin.json",))
+    plan.files[0].source.write_text(
+        json.dumps(
+            {
+                "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+                "name": "selected-plugin",
+            }
+        ),
+        encoding="utf-8",
+    )
+    prefix = f"demo-1.0.0.data/{scheme}"
+    wheel = _wheel(
+        tmp_path / WHEEL_NAME,
+        extra_members={
+            f"{DIST_INFO}/WHEEL": (
+                "Wheel-Version: 1.0\n"
+                f"Root-Is-Purelib: {str(scheme == 'purelib').lower()}\n"
+                "Tag: py3-none-any\n"
+            ).encode(),
+            f"{prefix}/{PLUGIN_ROOT}/plugin.json": b'{"name":"stale"}',
+            f"{prefix}/{PLUGIN_ROOT}/old.txt": b"stale resource",
+            f"{prefix}/{DIST_INFO}/agent_plugins.json": b"stale marker",
+            f"{prefix}/{DIST_INFO}/RECORD.jws": b"stale signature",
+            f"{prefix}/demo_resource.txt": b"library resource",
+        },
+    )
+
+    result = ap.attach_wheel(wheel, plan=plan)
+    installed = tmp_path / "installed"
+    subprocess.run(
+        [
+            uv,
+            "pip",
+            "install",
+            "--python",
+            sys.executable,
+            "--target",
+            str(installed),
+            "--no-deps",
+            str(wheel),
+        ],
+        env={**os.environ, "UV_CACHE_DIR": str(tmp_path / "uv-cache")},
+        check=True,
+        timeout=60,
+        capture_output=True,
+        text=True,
+    )
+    monkeypatch.syspath_prepend(str(installed))
+
+    plugin = ap.locate("demo")
+    assert plugin.manifest.name == "selected-plugin"
+    assert tuple(path.relative_to(plugin.path).as_posix() for path in plugin.files) == (
+        "plugin.json",
+    )
+    assert {path.name for path in plugin.path.iterdir()} == {"plugin.json"}
+    assert (installed / "demo_resource.txt").read_bytes() == b"library resource"
+    assert result.replaced_existing_plugin is True
+    assert result.removed_signatures == (
+        PurePosixPath(f"{prefix}/{DIST_INFO}/RECORD.jws"),
+    )
+    assert_wheel_record(wheel)
+
+
+def test_attachment_rejects_relocated_distribution_metadata(tmp_path: Path) -> None:
+    wheel = _wheel(
+        tmp_path / WHEEL_NAME,
+        extra_members={
+            f"demo-1.0.0.data/purelib/{DIST_INFO}/METADATA": (
+                b"Metadata-Version: 2.4\nName: demo\nVersion: 9.0.0\n"
+            ),
+        },
+    )
+    original = wheel.read_bytes()
+
+    with pytest.raises(ap.AgentPluginError, match="relocated distribution metadata"):
+        ap.attach_wheel(wheel, plan=_plan(tmp_path, ("plugin.json",)))
+
+    assert wheel.read_bytes() == original
+
+
 def test_attachment_preserves_archive_metadata_modes_and_record(tmp_path: Path) -> None:
     plan = _plan(tmp_path, ("plugin.json", "bin/server.py"))
     server = plan.files[1].source
@@ -247,22 +334,26 @@ def test_attachment_preserves_archive_metadata_modes_and_record(tmp_path: Path) 
             stat.S_IFREG | server_mode
         )
     assert result.removed_signatures == ()
-    _assert_record(wheel)
+    assert_wheel_record(wheel)
 
 
 @pytest.mark.parametrize(
-    ("member", "message"),
+    "member",
     [
-        ("/absolute.py", "unsafe archive member"),
-        ("C:drive-relative.py", "unsafe archive member"),
-        ("demo/../outside.py", "unsafe archive member"),
-        ("demo\\outside.py", "unsafe archive member"),
+        "/absolute.py",
+        "C:drive-relative.py",
+        "demo/../outside.py",
+        "demo\\outside.py",
+        "demo/name\x00suffix.py",
     ],
 )
-def test_attach_wheel_rejects_unsafe_members(
-    tmp_path: Path, member: str, message: str
-) -> None:
-    wheel = _wheel(tmp_path / WHEEL_NAME, extra_members={member: b"unsafe"})
+def test_attach_wheel_rejects_unsafe_members(tmp_path: Path, member: str) -> None:
+    stored_member = member.replace("\x00", "?")
+    wheel = _wheel(tmp_path / WHEEL_NAME, extra_members={stored_member: b"unsafe"})
+    if "\x00" in member:
+        wheel.write_bytes(
+            wheel.read_bytes().replace(stored_member.encode(), member.encode())
+        )
     if "\\" in member:
         contents = wheel.read_bytes()
         normalized = member.replace("\\", "/").encode()
@@ -271,7 +362,7 @@ def test_attach_wheel_rejects_unsafe_members(
             wheel.write_bytes(contents.replace(normalized, member.encode()))
     original = wheel.read_bytes()
 
-    with pytest.raises(ap.AgentPluginError, match=message):
+    with pytest.raises(ap.AgentPluginError, match="unsafe archive member"):
         ap.attach_wheel(wheel, plan=_plan(tmp_path, ("plugin.json",)))
 
     assert wheel.read_bytes() == original
@@ -360,6 +451,8 @@ def test_attach_wheel_reports_missing_corrupt_and_non_wheel_inputs(
         (("C:plugin.json",), "plugin root"),
         (("plugin.json", "plugin.json"), "duplicate target"),
         (("assets", "assets/icon.svg"), "file-directory target collisions"),
+        (("plugin.json", "assets/name\x00suffix.txt"), "plugin root"),
+        (("skills/demo/SKILL.md",), "must include plugin.json"),
     ],
 )
 def test_attach_wheel_rejects_invalid_supplied_plan(
@@ -371,6 +464,31 @@ def test_attach_wheel_rejects_invalid_supplied_plan(
 
     with pytest.raises(ap.AgentPluginError, match=message):
         ap.attach_wheel(wheel, plan=plan)
+
+    assert wheel.read_bytes() == original
+
+
+@pytest.mark.parametrize("invalid_location", ["wheel", "output", "source"])
+def test_attach_wheel_reports_invalid_filesystem_names(
+    tmp_path: Path, invalid_location: str
+) -> None:
+    wheel = _wheel(tmp_path / WHEEL_NAME)
+    original = wheel.read_bytes()
+    plan = _plan(tmp_path, ("plugin.json",))
+    invalid = tmp_path / "invalid\0path.whl"
+    if invalid_location == "source":
+        plan = ap.BuildPlan(
+            project=plan.project,
+            root=plan.root,
+            files=(ap.FileMapping(invalid, PurePosixPath("plugin.json")),),
+        )
+
+    with pytest.raises(ap.AgentPluginError, match=r"cannot be read|cannot be used"):
+        ap.attach_wheel(
+            invalid if invalid_location == "wheel" else wheel,
+            plan=plan,
+            output_dir=invalid if invalid_location == "output" else None,
+        )
 
     assert wheel.read_bytes() == original
 
@@ -589,21 +707,3 @@ def _metadata(info: zipfile.ZipInfo) -> tuple[object, ...]:
         info.internal_attr,
         info.external_attr,
     )
-
-
-def _assert_record(wheel: Path) -> None:
-    with zipfile.ZipFile(wheel) as archive:
-        record_name = f"{DIST_INFO}/RECORD"
-        rows = list(csv.reader(archive.read(record_name).decode().splitlines()))
-        members = {name for name in archive.namelist() if not name.endswith("/")}
-        row_names = [row[0] for row in rows]
-        assert len(row_names) == len(set(row_names))
-        assert set(row_names) == members
-        for name, digest, size in rows:
-            if name == record_name:
-                assert (digest, size) == ("", "")
-                continue
-            value = archive.read(name)
-            encoded = base64.urlsafe_b64encode(hashlib.sha256(value).digest())
-            assert digest == f"sha256={encoded.rstrip(b'=').decode()}"
-            assert size == str(len(value))

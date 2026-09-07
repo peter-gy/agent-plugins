@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 
 from .._errors import AgentPluginError
+from .._files import FileInventory
 from .errors import ValidationError, ValidationIssue
 
 
@@ -16,7 +17,7 @@ def resolve_file(path: str | os.PathLike[str]) -> Path:
     try:
         configured = candidate.parent.resolve(strict=True) / candidate.name
         resolved = configured.resolve(strict=True)
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         raise AgentPluginError(
             f"Plugin document cannot be resolved: {candidate}"
         ) from error
@@ -32,6 +33,18 @@ def read_json(path: Path) -> object:
         return json.loads(text, parse_constant=_reject_constant)
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
         raise validation_error(path, (), "Expected valid JSON") from error
+
+
+def selected_file(inventory: FileInventory, name: str) -> Path:
+    """Recheck a selected document before its first content read."""
+    try:
+        return inventory.file(name, kind="Plugin document")
+    except AgentPluginError as error:
+        raise validation_error(
+            inventory.root / name,
+            (),
+            "Document cannot be read inside its selected root",
+        ) from error
 
 
 def validation_error(

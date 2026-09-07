@@ -10,7 +10,7 @@ Project and installed discovery create a bounded filesystem inventory first. Doc
 
 `locate(distribution_name)` asks `importlib.metadata` for one Python distribution and reads its `agent_plugins.json` file. A relative marker root resolves through `Distribution.locate_file()`. An absolute root supports editable installs.
 
-`installed()` scans every visible distribution, skips unmarked entries, and sorts the result by distribution name without regard to case. It is fail-fast. One invalid marked distribution aborts the complete scan.
+`installed()` selects the first visible installation of each normalized distribution name, then skips unmarked entries and sorts the result by distribution name without regard to case. This preserves `importlib.metadata` precedence even when an unmarked installation shadows a marked one. It is fail-fast. An invalid selected marked distribution aborts the complete scan.
 
 The distribution name remains independent from the manifest plugin name.
 
@@ -30,12 +30,16 @@ Relative names reject absolute paths, `.`, parent traversal, and backslashes. Ev
 
 `LazyResult` evaluates a loader once under a lock. It caches either the returned value or the raised exception, then releases its loader reference.
 
+A `BaseException` interruption before a value or ordinary exception is cached releases the lock and retains the loader for a retry.
+
 The two state boundaries are:
 
 1. `Plugin` and `Skill` construction captures the selected file inventory.
 2. First manifest, MCP, or skill content access captures the document value or error.
 
 A new handle refreshes document content. An editable reinstall is also required when the selected filenames change.
+
+Inventory-bound manifest, MCP, and skill loaders recheck the document's containment immediately before the first read. A failed check becomes a cached `ValidationError`. Native paths remain ordinary filesystem paths, and validation is not an atomic filesystem sandbox.
 
 ## Manifest validation
 
@@ -61,7 +65,7 @@ The versioned loader owns:
 - URL user-information, fragment, escaping, whitespace, and port checks.
 - HTTP header name, value, and case-insensitive uniqueness checks.
 
-The loader preserves placeholder strings. `MCPConfig.resolve_stdio()` applies one-pass placeholder expansion, resolves selected plugin commands and working directories, and returns immutable subprocess inputs. Runtime resolution is uncached because it depends on the caller's data directory, base environment, and current filesystem.
+The loader preserves placeholder strings. `MCPConfig.resolve_stdio()` delegates to `_mcp.py`, which applies one-pass placeholder expansion, resolves selected plugin commands and working directories, and returns immutable subprocess inputs. Runtime resolution is uncached because it depends on the caller's data directory, base environment, and current filesystem.
 
 Process creation, permissions, transport connection, authentication, logging, and the MCP handshake remain client-owned.
 

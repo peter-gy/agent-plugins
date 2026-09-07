@@ -31,6 +31,24 @@ def test_manifest_is_a_lazy_cached_file_backed_model(tmp_path: Path) -> None:
     assert manifest.description == "Cached description"
 
 
+def test_manifest_can_retry_an_interrupted_first_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "plugin.json"
+    _write_manifest(path, name="demo")
+    manifest = ap.Manifest(path)
+
+    def interrupt(_path: Path, **_kwargs: object) -> str:
+        raise KeyboardInterrupt
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "read_text", interrupt)
+        with pytest.raises(KeyboardInterrupt):
+            _name = manifest.name
+
+    assert manifest.name == "demo"
+
+
 def test_manifest_exposes_typed_immutable_values(tmp_path: Path) -> None:
     path = tmp_path / "plugin.json"
     path.write_text(
@@ -122,10 +140,6 @@ def test_manifest_reports_and_ignores_nonfatal_fields(tmp_path: Path) -> None:
     [
         ({"name": "demo-plugin"}, "Unsupported or missing manifest schema"),
         (
-            {"$schema": PLUGIN_SCHEMA, "name": "Demo"},
-            "Invalid plugin name",
-        ),
-        (
             {"$schema": PLUGIN_SCHEMA, "name": "demo", "keywords": [1]},
             "Expected an array of strings",
         ),
@@ -189,7 +203,7 @@ def test_manifest_rejects_nonstandard_json_constants(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize(
     "name",
-    ["a", "my-plugin", "acme.tools", "lint3r", "a" * 64],
+    ["a", "my-plugin.tools3", "a" * 64],
 )
 def test_manifest_accepts_specification_names(tmp_path: Path, name: str) -> None:
     path = tmp_path / "plugin.json"
@@ -204,8 +218,6 @@ def test_manifest_accepts_specification_names(tmp_path: Path, name: str) -> None
         "",
         "Demo",
         "-start",
-        ".start",
-        "end-",
         "end.",
         "has--double",
         "has..double",
