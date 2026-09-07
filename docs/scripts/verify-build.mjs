@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises'
+import { glob, readFile, stat } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -29,14 +29,21 @@ check(await isFile(indexPath), 'Missing built home page')
 check(await isFile(join(outputRoot, 'favicon.svg')), 'Missing built favicon')
 check(await isFile(join(outputRoot, 'og.png')), 'Missing built Open Graph image')
 check(await isFile(join(outputRoot, 'robots.txt')), 'Missing built robots file')
-check(
-  await isFile(join(outputRoot, 'guide', 'attach-wheel.html')),
-  'Missing built attach-wheel guide'
-)
-check(
-  await isFile(join(outputRoot, 'guide', 'inspect-project.html')),
-  'Missing built inspect-project guide'
-)
+const sources = []
+for await (const source of glob('**/*.md', {
+  cwd: packageRoot,
+  exclude: ['node_modules/**', '.vitepress/**']
+})) {
+  sources.push(source.replaceAll('\\', '/'))
+}
+sources.sort()
+for (const source of sources) {
+  check(
+    await isFile(join(outputRoot, source.replace(/\.md$/, '.html'))),
+    `Missing built page for ${source}`
+  )
+  check(await isFile(join(outputRoot, source)), `Missing Markdown page for ${source}`)
+}
 check(await isFile(join(outputRoot, 'llms.txt')), 'Missing generated llms.txt')
 check(
   await isFile(join(outputRoot, 'llms-full.txt')),
@@ -97,41 +104,23 @@ const llmsPath = join(outputRoot, 'llms.txt')
 const llmsFullPath = join(outputRoot, 'llms-full.txt')
 if (await isFile(llmsPath)) {
   const llms = await readFile(llmsPath, 'utf8')
-  check(
-    llms.includes(`${deployedSiteUrl.href}guide/getting-started.md`),
-    'llms.txt is missing the getting-started Markdown URL'
-  )
-  check(
-    llms.includes(`${deployedSiteUrl.href}reference/python-api.md`),
-    'llms.txt is missing the Python API Markdown URL'
-  )
-  check(
-    llms.includes(`${deployedSiteUrl.href}guide/attach-wheel.md`),
-    'llms.txt is missing the attach-wheel Markdown URL'
-  )
-  check(
-    llms.includes(`${deployedSiteUrl.href}guide/inspect-project.md`),
-    'llms.txt is missing the inspect-project Markdown URL'
-  )
+  for (const source of sources.filter((source) => source !== 'index.md')) {
+    check(
+      llms.includes(new URL(source, deployedSiteUrl).href),
+      `llms.txt is missing the Markdown URL for ${source}`
+    )
+  }
 }
 if (await isFile(llmsFullPath)) {
   const llmsFull = await readFile(llmsFullPath, 'utf8')
-  check(
-    llmsFull.includes(`url: ${deployedSiteUrl.href}`),
-    'llms-full.txt is missing canonical page URLs'
-  )
-  check(
-    llmsFull.includes('# Python API reference'),
-    'llms-full.txt is missing the Python API content'
-  )
-  check(
-    llmsFull.includes('# Attach a prebuilt wheel'),
-    'llms-full.txt is missing the attach-wheel guide content'
-  )
-  check(
-    llmsFull.includes('# Inspect an authored project'),
-    'llms-full.txt is missing the inspect-project guide content'
-  )
+  for (const source of sources) {
+    const url = new URL(source, deployedSiteUrl).href
+    check(llmsFull.includes(`url: ${url}`), `llms-full.txt is missing ${url}`)
+    if (await isFile(join(outputRoot, source))) {
+      const markdown = await readFile(join(outputRoot, source), 'utf8')
+      check(markdown.includes(`url: ${url}`), `Incorrect canonical URL in ${source}`)
+    }
+  }
 }
 
 if (failures.length > 0) {
@@ -142,5 +131,5 @@ if (failures.length > 0) {
   )
   process.exitCode = 1
 } else {
-  console.log(`Verified documentation build at base path ${basePath || '/'}.`)
+  console.log(`Verified ${sources.length} documentation pages at base path ${basePath || '/'}.`)
 }

@@ -120,7 +120,6 @@ def test_resolve_stdio_expansion_is_single_pass_and_leaves_keys_literal(
 
     assert launch.command == "${PLUGIN_ROOT}"
     assert launch.args == (str(data_dir.resolve()), "${UNKNOWN}")
-    assert "${PLUGIN_ROOT}" in launch.args[0]
     assert launch.env["${PLUGIN_ROOT}"] == str(data_dir.resolve())
 
 
@@ -153,12 +152,12 @@ def test_resolve_stdio_rejects_unknown_or_non_stdio_server(
         _mcp(root).resolve_stdio(name, data_dir=data_dir)
 
 
-@pytest.mark.parametrize("data_kind", ["missing", "file"])
+@pytest.mark.parametrize("data_kind", ["missing", "file", "invalid"])
 def test_resolve_stdio_requires_existing_data_directory(
     tmp_path: Path, data_kind: str
 ) -> None:
     root = _plugin(tmp_path, {"local": _stdio("python")})
-    data_dir = tmp_path / "data"
+    data_dir = tmp_path / ("bad\0data" if data_kind == "invalid" else "data")
     if data_kind == "file":
         data_dir.write_text("data\n", encoding="utf-8")
 
@@ -166,7 +165,7 @@ def test_resolve_stdio_requires_existing_data_directory(
         _mcp(root).resolve_stdio("local", data_dir=data_dir)
 
 
-def test_resolve_stdio_rejects_unselected_plugin_command(tmp_path: Path) -> None:
+def test_resolve_stdio_requires_existing_plugin_command(tmp_path: Path) -> None:
     root = _plugin(tmp_path, {"local": _stdio("./bin/missing")})
     data_dir = tmp_path / "data"
     data_dir.mkdir()
@@ -292,6 +291,50 @@ def test_resolve_stdio_rejects_unselected_project_paths(tmp_path: Path) -> None:
         mcp.resolve_stdio("local", data_dir=data_dir)
 
 
+@pytest.mark.parametrize("cwd", ["./alias", "${PLUGIN_ROOT}/work/../alias"])
+def test_resolve_stdio_uses_selected_working_directory_alias(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cwd: str
+) -> None:
+    root = _plugin(
+        tmp_path,
+        {
+            "local": _stdio("python", cwd=cwd),
+            "unselected": _stdio("python", cwd="./other"),
+        },
+    )
+    target = root / "target"
+    target.mkdir()
+    (target / "script.py").write_text("print('demo')\n", encoding="utf-8")
+    (root / "work").mkdir()
+    try:
+        (root / "alias").symlink_to(target, target_is_directory=True)
+        (root / "other").symlink_to(target, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+    dist_info = tmp_path / "demo_provider-1.0.dist-info"
+    dist_info.mkdir()
+    (dist_info / "METADATA").write_text(
+        "Metadata-Version: 2.4\nName: demo-provider\nVersion: 1.0\n",
+        encoding="utf-8",
+    )
+    (dist_info / "agent_plugins.json").write_text(
+        json.dumps(
+            {
+                "root": root.name,
+                "files": ["plugin.json", "mcp.json", "alias/script.py"],
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(sys, "path", [str(tmp_path)])
+    mcp = ap.locate("demo-provider").mcp
+    assert mcp is not None
+
+    assert mcp.resolve_stdio("local", data_dir=tmp_path).cwd == target.resolve()
+    with pytest.raises(ap.AgentPluginError, match="unavailable in the selected plugin"):
+        mcp.resolve_stdio("unselected", data_dir=tmp_path)
+
+
 def test_direct_mcp_config_resolves_contained_physical_paths(tmp_path: Path) -> None:
     root = _plugin(
         tmp_path,
@@ -333,6 +376,74 @@ def test_plugin_relative_command_accepts_portable_backslash_separator(
     launch = _mcp(root).resolve_stdio("local", data_dir=data_dir)
 
     assert launch.command == str(server.resolve())
+
+
+def test_plugin_relative_command_resolves_contained_selected_paths(
+    tmp_path: Path,
+) -> None:
+    root = _plugin(tmp_path, {"local": _stdio("./bin/../server")})
+    (root / "bin").mkdir()
+    server = root / "server"
+    server.write_text("server\n", encoding="utf-8")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    launch = _mcp(root).resolve_stdio("local", data_dir=data_dir)
+
+    assert launch.command == str(server.resolve())
+
+
+def test_plugin_relative_command_keeps_filesystem_traversal_semantics(
+    tmp_path: Path,
+) -> None:
+    root = _plugin(tmp_path, {"local": _stdio("./alias/../server")})
+    nested = root / "nested" / "bin"
+    nested.mkdir(parents=True)
+    try:
+        (root / "alias").symlink_to(nested, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+    # Windows normalizes parent segments before resolving directory symlinks.
+    if os.name == "nt":
+        (root / "server").write_text("root\n", encoding="utf-8")
+    (root / "nested" / "server").write_text("nested\n", encoding="utf-8")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+
+    launch = _mcp(root).resolve_stdio("local", data_dir=data_dir)
+
+    expected = root / "server" if os.name == "nt" else root / "nested" / "server"
+    assert launch.command == str(expected.resolve())
+
+
+@pytest.mark.parametrize("selected", ["alias", "server"])
+def test_plugin_relative_command_uses_selected_symlink_name(
+    tmp_path: Path, selected: str
+) -> None:
+    root = _plugin(tmp_path, {"local": _stdio("./bin/../alias")})
+    (root / "pyproject.toml").write_text(
+        f'[tool.agent-plugins]\nroot = "."\ninclude = ["{selected}"]\n',
+        encoding="utf-8",
+    )
+    (root / "bin").mkdir()
+    server = root / "server"
+    server.write_text("server\n", encoding="utf-8")
+    try:
+        (root / "alias").symlink_to(server)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    mcp = ap.Plugin.from_project(root).mcp
+    assert mcp is not None
+
+    if selected == "alias":
+        assert mcp.resolve_stdio("local", data_dir=data_dir).command == str(
+            server.resolve()
+        )
+    else:
+        with pytest.raises(ap.AgentPluginError, match="selected plugin"):
+            mcp.resolve_stdio("local", data_dir=data_dir)
 
 
 @pytest.mark.skipif(os.name == "nt", reason="POSIX absolute path expansion case")

@@ -11,15 +11,26 @@ Import the top-level API as `agent_plugins`:
 import agent_plugins as ap
 ```
 
-Load the package-selected Agent Plugin and read one named skill:
+The installed `agent-plugins` distribution includes a skill you can inspect:
 
 ```python
-plugin = ap.Plugin.from_project(".")
+plugin = ap.locate("agent-plugins")
 skill = plugin.skill("agent-plugins")
 print(skill.source)
 ```
 
 The distribution supports Python 3.10 through 3.14 and ships a `py.typed` marker.
+
+| Task | Entry point |
+| --- | --- |
+| Preview selected package files | [`build_plan()`](#build-planning) |
+| Add a plugin to an existing wheel | [`attach_wheel()`](#wheel-attachment) |
+| Find plugins in this environment | [`locate()` and `installed()`](#installed-discovery) |
+| Inspect authored files | [`Plugin.from_project()`](#plugin-from-project-project) or [`Plugin(path)`](#plugin) |
+| Read instructions and resources | [`Skill`](#skill) |
+| Inspect plugin metadata | [`Manifest`](#manifest) |
+| Inspect tool configuration and prepare a launch | [`MCPConfig`](#mcpconfig) |
+| Wrap a Python build backend | [`BuildBackend`](#buildbackend) |
 
 ## Build planning
 
@@ -59,6 +70,8 @@ class FileMapping:
 ```
 
 `source` is an absolute local path. `target` is relative to the plugin root inside an artifact.
+
+For a supplied `BuildPlan`, `attach_wheel()` checks that every source is a readable regular file and that targets are unique portable paths. Targets must include `plugin.json`. NUL characters, escaping paths, and file-directory collisions raise `AgentPluginError` before rewriting.
 
 ## Wheel attachment
 
@@ -139,7 +152,7 @@ Pass the Python distribution name used by `pip` and `importlib.metadata`. An emp
 def installed() -> dict[str, Plugin]: ...
 ```
 
-Returns marked distributions keyed by Python distribution name and sorted without regard to case. Unmarked distributions are skipped.
+Returns marked distributions keyed by Python distribution name and sorted without regard to case. For equivalent distribution names, the first installation in Python metadata discovery order wins, matching `locate()`. An unmarked first installation shadows later installations of the same distribution.
 
 Discovery is fail-fast. An invalid marked distribution raises `AgentPluginError` and stops the scan.
 

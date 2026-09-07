@@ -7,8 +7,9 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from types import MappingProxyType
 
+from .._files import FileInventory
 from .errors import ValidationIssue
-from .json import read_json, resolve_file, validation_error
+from .json import read_json, resolve_file, selected_file, validation_error
 from .lazy import LazyResult
 from .models import Author, ManifestData
 from .v1 import PLUGIN_SCHEMA_1_0_0
@@ -29,6 +30,14 @@ class Manifest:
         resolved = resolve_file(path)
         self._path = resolved
         self._result = LazyResult(lambda: _load_manifest(resolved))
+
+    @classmethod
+    def _from_inventory(cls, inventory: FileInventory) -> Manifest:
+        manifest = cls(inventory.root / "plugin.json")
+        manifest._result = LazyResult(
+            lambda: _load_manifest(selected_file(inventory, "plugin.json"))
+        )
+        return manifest
 
     @property
     def path(self) -> Path:

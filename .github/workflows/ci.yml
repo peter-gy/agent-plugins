@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
   push:
     branches: [main]
@@ -24,6 +25,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         include:
           - os: windows-latest
+            python-version: "3.12"
+          - os: macos-latest
             python-version: "3.12"
     steps:
       - name: Check out repository
@@ -78,3 +81,13 @@ jobs:
 
       - name: Build and verify distributions
         run: ./scripts/build-dist.sh
+
+      - name: Upload verified distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: |
+            dist/agent_plugins-*.whl
+            dist/agent_plugins-*.tar.gz
+          retention-days: 7
+          if-no-files-found: error

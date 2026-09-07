@@ -5,7 +5,7 @@ description: Ship Agent Plugins with Python packages as one synchronized release
 
 hero:
   text: Ship Agent Plugins with Python packages.
-  tagline: Package portable skills and MCP server configuration, plus client extensions, with their Python library. One install exposes the matching plugin through Python metadata.
+  tagline: Release your library, agent instructions, and tool configuration together. One Python install makes the matching plugin available to agent clients.
   image:
     light: /brand/agent-plugins-lockup-vertical-light.svg
     dark: /brand/agent-plugins-lockup-vertical-dark.svg
@@ -15,8 +15,8 @@ hero:
       text: Get started
       link: /guide/getting-started
     - theme: alt
-      text: Learn the model
-      link: /guide/what-is-an-agent-plugin
+      text: Inspect a plugin
+      link: /guide/inspect-installed
     - theme: alt
       text: API reference
       link: /reference/python-api

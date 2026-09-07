@@ -43,9 +43,10 @@ other source → supplied BuildPlan           │          │          │
 
 | Owner | Contract |
 | --- | --- |
-| `_build/plan.py` | Resolve project configuration and produce ordered source-to-target mappings |
+| `_build/plan.py` | Select authored files, replay staged payloads, and validate source-to-target mappings |
 | `_build/backend.py` | Delegate PEP 517 and PEP 660 hooks, then augment artifacts |
-| `_build/wheel.py` | Validate and attach regular wheel payloads, return `WheelAttachment`, and attach editable markers internally |
+| `_build/wheel.py` | Own attachment, temporary artifact lifetime, publication, and `WheelAttachment` results |
+| `_build/wheel_archive.py` | Validate ZIP members, replace plugin payloads and markers, and rebuild `RECORD` |
 | `_build/sdist.py` | Stage the selected payload under `.agent-plugin/` |
 | `build/uv_build.py` | Public uv_build adapter module |
 | `build/hatchling.py` | Public Hatchling adapter module |
@@ -55,7 +56,8 @@ other source → supplied BuildPlan           │          │          │
 | `_plugin.py` | Construct project-selected handles and compose named manifest, MCP, and skill access around one inventory |
 | `_skill.py` | Expose exact skill source, checked selected files, native joins, and tree rendering |
 | `_schema/manifest.py` | Dispatch and cache manifest validation |
-| `_schema/mcp.py` | Dispatch and cache MCP validation, then resolve stdio declarations against runtime roots |
+| `_schema/mcp.py` | Dispatch and cache MCP validation and expose the `MCPConfig` facade |
+| `_mcp.py` | Resolve validated stdio declarations against current files, data directories, and environment values |
 | `_schema/models.py` | Hold immutable normalized document and stdio launch values |
 | `_schema/skill.py` | Split UTF-8 `SKILL.md` source at exact delimiters |
 | `_schema/v1/` | Validate Agent Plugins 1.0.0 documents |
@@ -66,7 +68,9 @@ other source → supplied BuildPlan           │          │          │
 
 The public `agent_plugins` package re-exports build planning, wheel attachment, discovery, filesystem, schema-value, and diagnostic types. `agent_plugins.build` separately exports the low-level `BuildBackend`.
 
-Private build code depends on the plan and marker codec. Runtime discovery depends on the marker codec and file inventory. Project inspection composes build planning with the same inventory model. Schema loaders do not depend on build or discovery code.
+Artifact operations depend on plan validation and archive writers. Archive writers depend on plan values and the marker codec. Runtime discovery depends on the marker codec and file inventory. Project inspection composes build planning with the same inventory model.
+
+Versioned schema loaders produce normalized values. Stdio resolution consumes those values and the selected inventory, independently of JSON parsing. `MCPConfig` composes cached document access with uncached launch preparation. Schema loaders and launch preparation do not depend on build or discovery code.
 
 The CLI parses input, calls public-domain functions, and renders output. Core modules do not depend on terminal state.
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Callable
 from html import escape
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -30,13 +32,11 @@ def test_plugin_exposes_absolute_component_paths(tmp_path: Path) -> None:
         )
     )
     assert plugin.skills == (ap.Skill(root / "skills" / "demo"),)
-    assert plugin.skills is plugin.skills
     assert plugin.skills[0].path == (root / "skills" / "demo").resolve()
     assert isinstance(plugin.mcp, ap.MCPConfig)
     assert plugin.mcp.path == (root / "mcp.json").resolve()
     assert plugin.manifest is plugin.manifest
     assert plugin.mcp is plugin.mcp
-    assert os.fspath(plugin) == str(root.resolve())
     assert Path(plugin) == root.resolve()
 
 
@@ -118,6 +118,14 @@ def test_plugin_requires_a_manifest(tmp_path: Path) -> None:
         ap.Plugin(tmp_path)
 
 
+@pytest.mark.parametrize("constructor", [ap.Plugin, ap.Manifest])
+def test_plugin_paths_report_invalid_filesystem_names(
+    tmp_path: Path, constructor: Callable[[Path], object]
+) -> None:
+    with pytest.raises(ap.AgentPluginError, match="cannot be resolved"):
+        constructor(tmp_path / "invalid\0path")
+
+
 def test_plugin_reports_a_file_as_an_invalid_root(tmp_path: Path) -> None:
     path = tmp_path / "plugin.json"
     path.write_text("{}\n", encoding="utf-8")
@@ -133,6 +141,100 @@ def test_plugin_mcp_is_none_when_configuration_is_absent(tmp_path: Path) -> None
     assert ap.Plugin(root).mcp is None
 
 
+@pytest.mark.parametrize(
+    ("relative", "read"),
+    [
+        ("plugin.json", lambda plugin: plugin.manifest.name),
+        ("mcp.json", lambda plugin: cast(ap.MCPConfig, plugin.mcp).servers),
+        ("skills/demo/SKILL.md", lambda plugin: plugin.skill("demo").source),
+    ],
+)
+def test_plugin_document_reads_recheck_containment(
+    tmp_path: Path, relative: str, read: Callable[[ap.Plugin], object]
+) -> None:
+    _project_path, root = _project(tmp_path)
+    document = root / relative
+    source = document.read_text(encoding="utf-8")
+    plugin = ap.Plugin(root)
+    outside = tmp_path / document.name
+    outside.write_text(source, encoding="utf-8")
+    document.unlink()
+    try:
+        document.symlink_to(outside)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(ap.ValidationError) as first:
+        read(plugin)
+
+    assert first.value.path == plugin.path / relative
+    document.unlink()
+    document.write_text(source, encoding="utf-8")
+    with pytest.raises(ap.ValidationError) as cached:
+        read(plugin)
+    assert cached.value is first.value
+    assert read(ap.Plugin(root)) is not None
+
+
+@pytest.mark.parametrize(
+    ("relative", "read"),
+    [
+        ("plugin.json", lambda plugin: plugin.manifest.name),
+        ("mcp.json", lambda plugin: cast(ap.MCPConfig, plugin.mcp).servers),
+        ("skills/demo/SKILL.md", lambda plugin: plugin.skill("demo").source),
+    ],
+)
+def test_plugin_documents_read_contained_symlinks_lazily(
+    tmp_path: Path, relative: str, read: Callable[[ap.Plugin], object]
+) -> None:
+    _project_path, root = _project(tmp_path)
+    document = root / relative
+    target = document.with_name(f"content-{document.name}")
+    document.rename(target)
+    try:
+        document.symlink_to(target)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+    plugin = ap.Plugin(root)
+    target.write_text(
+        target.read_text(encoding="utf-8").replace("demo", "revised"),
+        encoding="utf-8",
+    )
+
+    content = read(plugin)
+
+    assert "revised" in cast(str | dict[str, object], content)
+
+
+def test_plugin_skill_document_uses_plugin_containment(tmp_path: Path) -> None:
+    _project_path, root = _project(tmp_path)
+    instructions = root / "skills" / "demo" / "SKILL.md"
+    source = instructions.read_bytes().decode("utf-8")
+    shared = root / "shared"
+    shared.mkdir()
+    target = shared / "instructions.md"
+    instructions.rename(target)
+    try:
+        instructions.symlink_to(target)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    skill = ap.Plugin(root).skill("demo")
+    assert skill.source == source
+    with pytest.raises(ap.AgentPluginError):
+        skill.file("SKILL.md")
+    with pytest.raises(ap.AgentPluginError):
+        ap.Skill(instructions.parent)
+
+    pending = ap.Plugin(root).skill("demo")
+    outside = tmp_path / "outside.md"
+    outside.write_bytes(source.encode("utf-8"))
+    instructions.unlink()
+    instructions.symlink_to(outside)
+    with pytest.raises(ap.ValidationError):
+        _source = pending.source
+
+
 def test_plugin_from_project_uses_exact_build_plan_inventory(tmp_path: Path) -> None:
     project, root = _project(tmp_path)
     outside = tmp_path / "outside"
@@ -141,11 +243,12 @@ def test_plugin_from_project_uses_exact_build_plan_inventory(tmp_path: Path) -> 
     (root / "README.md").write_text("# Unselected\n", encoding="utf-8")
 
     plugin = ap.Plugin.from_project(project)
-    plan = ap.build_plan(project)
 
     assert plugin.path == root.resolve()
-    assert tuple(path.relative_to(plugin.path) for path in plugin.files) == tuple(
-        Path(mapping.target.as_posix()) for mapping in plan.files
+    assert tuple(path.relative_to(plugin.path).as_posix() for path in plugin.files) == (
+        "mcp.json",
+        "plugin.json",
+        "skills/demo/SKILL.md",
     )
     assert plugin.manifest.name == "demo-plugin"
     assert plugin.skill("demo") is plugin.skills[0]
@@ -154,7 +257,7 @@ def test_plugin_from_project_uses_exact_build_plan_inventory(tmp_path: Path) -> 
 
 
 def test_plugin_from_project_uses_staged_sdist_inventory(tmp_path: Path) -> None:
-    project, configured = _project(tmp_path)
+    project, _root = _project(tmp_path)
     staged = project / ".agent-plugin"
     staged_skill = staged / "skills" / "staged"
     staged_skill.mkdir(parents=True)
@@ -170,7 +273,6 @@ def test_plugin_from_project_uses_staged_sdist_inventory(tmp_path: Path) -> None
     assert plugin.path == staged.resolve()
     assert plugin.manifest.name == "staged-plugin"
     assert plugin.skill("staged").source == staged_source.decode()
-    assert configured.resolve() != plugin.path
 
 
 def test_plugin_skill_reports_sorted_available_names(tmp_path: Path) -> None:

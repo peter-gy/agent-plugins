@@ -53,7 +53,7 @@ The built distribution receives no runtime dependency on `agent-plugins` unless 
 
 A source distribution, or sdist, carries the selected files under a reserved `.agent-plugin/` staging directory.
 
-When a build frontend reconstructs a wheel from the sdist, `build_plan()` selects this staged copy. The rebuilt wheel therefore carries the same Agent Plugin payload as the source checkout used for the original sdist.
+When a build frontend reconstructs a wheel from the sdist, `build_plan()` uses the complete staged file selection. The rebuilt wheel therefore carries the same Agent Plugin payload captured in the source distribution, including files selected by authored include patterns.
 
 ## Editable installs
 

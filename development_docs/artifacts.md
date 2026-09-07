@@ -8,9 +8,11 @@ Configuration adapters produce a validated `BuildPlan`. `attach_wheel()` consume
 
 The configured `root` resolves from that directory. When `project/.agent-plugin/plugin.json` exists, the staged directory takes precedence. This is how a wheel rebuilt from a source distribution selects the payload captured in that source distribution.
 
-The plan adds required `plugin.json`, an optional recursive `skills/` tree, optional root-level `mcp.json`, and every `include` match. Target keys deduplicate mappings and sort by raw POSIX path.
+For an authored root, the plan adds required `plugin.json`, an optional recursive `skills/` tree, optional root-level `mcp.json`, and every `include` match. For a staged root, it inventories the complete captured payload. Authored include patterns have already selected that payload. Target keys deduplicate mappings and sort by raw POSIX path.
 
 Selection rejects directory symlinks, paths that resolve outside the plugin root, absolute include patterns, parent traversal, and backslashes. File symlinks remain acceptable when their targets resolve inside the root.
+
+Supplied plans are checked before wheel rewriting. Targets must be unique portable file paths, must include `plugin.json`, and must have readable regular sources. NUL characters and file-directory target collisions are rejected.
 
 ## Backend delegation
 
@@ -37,7 +39,7 @@ The wheel must contain exactly one top-level `.dist-info/WHEEL` member plus sibl
 <distribution>-<version>.agent-plugin/
 ```
 
-The rewrite removes any existing owned plugin directory, `agent_plugins.json`, `RECORD`, and `RECORD` signature files. It copies every other member with its bytes and relevant `ZipInfo` metadata, preserves the archive comment, writes the selected plugin payload in plan order, writes a compact marker, then creates a new `RECORD`.
+`wheel.py` owns the operation and publication. `wheel_archive.py` inspects the ZIP layout, replaces the owned plugin directory, `agent_plugins.json`, `RECORD`, and `RECORD` signature files, and copies every other member with its bytes and relevant `ZipInfo` metadata. It preserves the archive comment, writes the selected plugin payload in plan order, writes a compact marker, then creates a new `RECORD`.
 
 Added members use the ZIP epoch timestamp, deflate compression, and source permission bits. `RECORD` contains one row per non-directory member. Its hashes use SHA-256 with URL-safe base64 and no padding. The `RECORD` row itself has empty hash and size fields.
 
@@ -45,13 +47,15 @@ Added members use the ZIP epoch timestamp, deflate compression, and source permi
 
 The rewrite uses a temporary file in the destination directory and applies the source artifact mode before publication. In-place attachment replaces the source after the complete rewrite succeeds. `output_dir` preserves the source, keeps its filename, and uses a no-clobber publish operation. Planning, validation, source reads, ZIP writing, and publication failures leave the source bytes unchanged. Temporary artifacts are cleaned after success and failure.
 
+Ownership uses installation paths as well as top-level archive paths. Payloads and markers under wheel `.data/purelib/` and `.data/platlib/` locations are replaced when they install into the owned plugin or marker path. Conflicting relocated distribution metadata is rejected before publication.
+
 An existing marker or matching plugin payload sets `replaced_existing_plugin`. The rewrite removes that owned state before writing the current plan. Repeating the same attachment is byte-deterministic.
 
 ## Source distribution rewrite
 
 The source artifact must be a `.tar.gz` archive with one safe top-level directory. Absolute paths, parent traversal, or multiple roots are rejected.
 
-The rewrite replaces any existing `<archive-root>/.agent-plugin/` subtree and adds the planned payload there. New members preserve source modes and modification times while normalizing user and group identifiers to zero. The gzip header timestamp is zero. Temporary replacement also preserves the source distribution's outer file mode.
+The rewrite compares canonical member paths to replace the complete `<archive-root>/.agent-plugin/` subtree, then adds the planned payload there. New members preserve source modes and modification times while normalizing user and group identifiers to zero. The gzip header timestamp is zero. Temporary replacement also preserves the source distribution's outer file mode.
 
 The staged payload ensures that a later wheel rebuild carries the same selected plugin bytes. Complete wheel byte reproducibility remains owned by the delegated backend and source metadata.
 

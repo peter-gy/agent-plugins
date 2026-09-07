@@ -61,6 +61,37 @@ def test_include_pattern_must_match_a_plugin_file(tmp_path: Path) -> None:
         ap.build_plan(project)
 
 
+def test_include_pattern_accepts_an_empty_directory(tmp_path: Path) -> None:
+    project, root = _project(tmp_path, include="assets/**")
+    (root / "assets").mkdir()
+
+    plan = ap.build_plan(project)
+
+    assert tuple(mapping.target.as_posix() for mapping in plan.files) == (
+        "mcp.json",
+        "plugin.json",
+        "skills/demo/SKILL.md",
+        "skills/demo/references/guide.md",
+    )
+
+
+@pytest.mark.parametrize("tree", ["skills", "bin"])
+def test_build_plan_rejects_selected_directory_symlinks(
+    tmp_path: Path, tree: str
+) -> None:
+    project, root = _project(tmp_path)
+    directory = root / tree
+    source = root / f"{tree}-source"
+    directory.rename(source)
+    try:
+        directory.symlink_to(source, target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlinks unavailable: {error}")
+
+    with pytest.raises(ap.AgentPluginError, match="Directory symlinks"):
+        ap.build_plan(project)
+
+
 def test_plan_command_reports_configuration_errors(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -77,6 +108,23 @@ def test_build_plan_reports_invalid_utf8_as_agent_plugin_error(tmp_path: Path) -
 
     with pytest.raises(ap.AgentPluginError, match="Cannot read project configuration"):
         ap.build_plan(tmp_path)
+
+
+@pytest.mark.parametrize("invalid_location", ["project", "root"])
+def test_build_plan_reports_invalid_filesystem_names(
+    tmp_path: Path, invalid_location: str
+) -> None:
+    project = tmp_path
+    if invalid_location == "project":
+        project = tmp_path / "invalid\0project"
+    else:
+        (project / "pyproject.toml").write_text(
+            '[tool.agent-plugins]\nroot = "invalid\\u0000root"\n',
+            encoding="utf-8",
+        )
+
+    with pytest.raises(ap.AgentPluginError, match="cannot be resolved"):
+        ap.build_plan(project)
 
 
 def test_build_plan_reports_symlink_loop_as_agent_plugin_error(tmp_path: Path) -> None:

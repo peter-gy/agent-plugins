@@ -17,7 +17,7 @@ Check the authored plugin root and every target path. The plan should contain `p
 
 ## 2. Validate authored documents
 
-Construct a direct `Plugin` handle and access the fields your consumers use:
+Open the project's selected plugin files and access the fields your consumers use:
 
 ```python
 import agent_plugins as ap

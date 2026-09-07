@@ -48,6 +48,10 @@ A `Plugin` or `Skill` handle captures its selected file inventory during constru
 
 Each manifest, MCP configuration, and skill document reads content on first content access. The object then caches the loaded value or raised exception under a lock. Skill `source`, `frontmatter`, and `body` share one cached read.
 
+An interrupted first read can be retried on the same handle. Completed reads and validation failures remain cached.
+
+Documents obtained through a `Plugin` or `Skill` recheck containment before that first read. If the selected path has become unavailable or resolves outside its root, content access raises a cached `ValidationError`.
+
 Create a new handle to refresh document contents:
 
 ```python

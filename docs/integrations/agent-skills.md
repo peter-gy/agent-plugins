@@ -57,7 +57,7 @@ print(skill.file("references/fields.md"))
 
 `skill.file(relative_path)` requires an exact selected file and rechecks containment. Use it for instructions, references, scripts, agents, and assets that came from an Agent Plugin inventory.
 
-The `/` operator remains an ordinary unchecked `pathlib.Path` join for compatibility.
+The `/` operator performs ordinary unchecked `pathlib.Path` joining.
 
 ## Content cache
 

@@ -35,7 +35,7 @@ def _rewrite(source_path: Path, target_path: Path, plan: BuildPlan) -> None:
     with tarfile.open(source_path, "r:gz") as source:
         members = source.getmembers()
         root = _archive_root(members)
-        stage = f"{root}/{STAGED_ROOT}"
+        stage = PurePosixPath(root, STAGED_ROOT)
 
         with (
             target_path.open("wb") as raw_target,
@@ -47,7 +47,7 @@ def _rewrite(source_path: Path, target_path: Path, plan: BuildPlan) -> None:
             ) as target,
         ):
             for member in members:
-                if member.name == stage or member.name.startswith(f"{stage}/"):
+                if PurePosixPath(member.name).is_relative_to(stage):
                     continue
                 file_object = source.extractfile(member) if member.isfile() else None
                 try:

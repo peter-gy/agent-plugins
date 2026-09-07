@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from .._files import FileInventory
 from .errors import ValidationError, ValidationIssue
+from .json import selected_file
 from .lazy import LazyResult
 
 
@@ -21,9 +23,9 @@ class SkillDocument:
 
     __slots__ = ("_path", "_result")
 
-    def __init__(self, path: Path) -> None:
-        self._path = path
-        self._result = LazyResult(lambda: _load(path))
+    def __init__(self, inventory: FileInventory, name: str = "SKILL.md") -> None:
+        self._path = inventory.root / name
+        self._result = LazyResult(lambda: _load(selected_file(inventory, name)))
 
     @property
     def frontmatter(self) -> str:

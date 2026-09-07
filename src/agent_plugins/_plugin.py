@@ -10,6 +10,7 @@ from ._build.plan import build_plan
 from ._errors import AgentPluginError
 from ._files import FileInventory
 from ._schema import Manifest, MCPConfig
+from ._schema.skill import SkillDocument
 from ._skill import Skill
 from ._tree import DEFAULT_MAX_DEPTH, DEFAULT_MAX_FILES, render_tree
 
@@ -165,7 +166,7 @@ def _set_state(
     inventory: FileInventory,
 ) -> None:
     plugin._inventory = inventory
-    manifest = Manifest(inventory.root / "plugin.json")
+    manifest = Manifest._from_inventory(inventory)
     mcp = (
         MCPConfig._from_inventory(inventory.root / "mcp.json", manifest, inventory)
         if PurePosixPath("mcp.json") in inventory.names
@@ -187,6 +188,12 @@ def _skills(inventory: FileInventory) -> tuple[tuple[str, Skill], ...]:
         and relative.name == "SKILL.md"
     )
     return tuple(
-        (skill_root.name, Skill._from_inventory(inventory.subtree(skill_root)))
+        (
+            skill_root.name,
+            Skill._from_inventory(
+                inventory.subtree(skill_root),
+                document=SkillDocument(inventory, (skill_root / "SKILL.md").as_posix()),
+            ),
+        )
         for skill_root in skill_roots
     )

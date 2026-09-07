@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from importlib import metadata
 from pathlib import Path
 
@@ -33,12 +34,19 @@ def locate(distribution_name: str) -> Plugin:
 def installed() -> dict[str, Plugin]:
     """Return installed Agent Plugins keyed by distribution name."""
     plugins: dict[str, Plugin] = {}
+    seen: set[str] = set()
     for distribution in metadata.distributions():
+        name = distribution.metadata["Name"]
+        if name is not None:
+            normalized = re.sub(r"[-_.]+", "-", name).lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+
         marker = distribution.read_text(MARKER_NAME)
         if marker is None:
             continue
 
-        name = distribution.metadata["Name"]
         if name is None:
             raise AgentPluginError(
                 f"Distribution marker {MARKER_NAME!r} has no project name"
