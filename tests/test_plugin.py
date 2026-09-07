@@ -209,7 +209,7 @@ def test_plugin_documents_read_contained_symlinks_lazily(
 def test_plugin_skill_document_uses_plugin_containment(tmp_path: Path) -> None:
     _project_path, root = _project(tmp_path)
     instructions = root / "skills" / "demo" / "SKILL.md"
-    source = instructions.read_text(encoding="utf-8")
+    source = instructions.read_bytes().decode("utf-8")
     shared = root / "shared"
     shared.mkdir()
     target = shared / "instructions.md"
@@ -228,7 +228,7 @@ def test_plugin_skill_document_uses_plugin_containment(tmp_path: Path) -> None:
 
     pending = ap.Plugin(root).skill("demo")
     outside = tmp_path / "outside.md"
-    outside.write_text(source, encoding="utf-8")
+    outside.write_bytes(source.encode("utf-8"))
     instructions.unlink()
     instructions.symlink_to(outside)
     with pytest.raises(ap.ValidationError):

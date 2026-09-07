@@ -403,13 +403,17 @@ def test_plugin_relative_command_keeps_filesystem_traversal_semantics(
         (root / "alias").symlink_to(nested, target_is_directory=True)
     except OSError as error:
         pytest.skip(f"symlinks unavailable: {error}")
+    # Windows normalizes parent segments before resolving directory symlinks.
+    if os.name == "nt":
+        (root / "server").write_text("root\n", encoding="utf-8")
     (root / "nested" / "server").write_text("nested\n", encoding="utf-8")
     data_dir = tmp_path / "data"
     data_dir.mkdir()
 
     launch = _mcp(root).resolve_stdio("local", data_dir=data_dir)
 
-    assert launch.command == str((root / "nested" / "server").resolve())
+    expected = root / "server" if os.name == "nt" else root / "nested" / "server"
+    assert launch.command == str(expected.resolve())
 
 
 @pytest.mark.parametrize("selected", ["alias", "server"])

@@ -24,7 +24,7 @@ def test_quickstart_installs_library_and_skill_from_documented_files(
     ):
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content.encode("utf-8"))
 
     project = tmp_path / "packages/python"
     dist = tmp_path / "dist"
