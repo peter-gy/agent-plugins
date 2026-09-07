@@ -56,11 +56,13 @@ The distribution verifier:
 | Manifest normalization, immutability, issues, caching | `tests/test_manifest.py` |
 | MCP transports, security checks, partial validation, caching | `tests/test_mcp.py` |
 | Pure stdio launch resolution and subprocess inputs | `tests/test_mcp_resolution.py` |
-| Release-independent dependency examples | `tests/test_docs.py` |
+| Documented quickstart builds and installs library code with its skill | `tests/test_docs.py` |
 
-CI runs pytest on Linux for Python 3.10 through 3.14 and on Windows for Python 3.12. The quality job runs formatting, lint, both type checkers, ShellCheck, and distribution verification.
+CI runs pytest on Linux for Python 3.10 through 3.14 and on Windows and macOS for Python 3.12. The quality job runs formatting, lint, both type checkers, actionlint, ShellCheck, and distribution verification, then uploads the verified wheel and source distribution as the `dist` artifact.
 
-The documentation workflow installs `docs/pnpm-lock.yaml`, runs the TypeScript check and VitePress build for pull requests, and deploys the built site from `main`. Configure the repository's Pages source as GitHub Actions before the first deployment.
+`ci.yml` also exposes a [reusable workflow](https://docs.github.com/en/actions/concepts/workflows-and-actions/reusing-workflow-configurations), allowing publishing to run the same checks on the tagged source. The publish job downloads the artifact from that run after every Python matrix job and the quality job succeed.
+
+The documentation workflow installs `docs/pnpm-lock.yaml`, runs the TypeScript check and VitePress build for pull requests, and deploys the built site from `main`. Build verification enumerates the Markdown sources and checks their HTML output, downloadable Markdown, canonical URLs, and coverage in the generated text indexes. Configure the repository's Pages source as GitHub Actions before the first deployment.
 
 For a deployment, `actions/configure-pages` supplies the repository or custom-domain base path and complete site URL. The workflow passes those values as `BASE_PATH` and `SITE_URL`. VitePress uses `BASE_PATH` for assets and navigation, while canonical, sitemap, and social metadata use `SITE_URL`. Local development omits both variables, serves from `/`, and keeps the published site URL as the metadata fallback.
 
@@ -82,9 +84,14 @@ git pull --ff-only origin main
 
 The dry run is a networked release preflight. It requires GitHub authentication, fetches `main` and tags, verifies a clean synchronized `main`, checks the final version and absent tag, verifies the exact commit's successful push CI run, resolves the repository URL, and stops before creating the tag.
 
-The release run creates and pushes an annotated version tag. The publish workflow builds and verifies the artifacts, publishes through the PyPI trusted publisher, verifies the public package, and creates a GitHub release.
+The release run creates and pushes an annotated version tag. Publishing follows this dependency order:
 
-Use the release script for tag creation. The publish workflow checks that the tagged commit belongs to `origin/main`, while the script supplies the stricter exact-commit CI gate. A manually pushed tag can bypass that stricter preflight.
+```text
+tag preflight → shared CI checks and artifact build → PyPI publish
+             → public installation verification → GitHub release
+```
+
+Use the release script for tag creation. It checks the existing successful `main` CI run before tagging. The publish workflow verifies the annotated tag, package version, and membership in `origin/main`, then independently runs the shared CI checks before publishing the resulting artifacts.
 
 PyPI trusted publishing is configured against `.github/workflows/publish.yml` and the repository `pypi` environment.
 

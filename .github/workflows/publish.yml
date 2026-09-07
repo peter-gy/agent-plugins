@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  preflight:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -29,26 +29,15 @@ jobs:
           enable-cache: true
           cache-dependency-glob: uv.lock
 
-      - name: Install locked dependencies
-        run: uv sync --locked
+      - name: Check release tag
+        run: ./scripts/check-release.sh
 
-      - name: Build release
-        run: |
-          ./scripts/check-release.sh
-          ./scripts/build-dist.sh
-
-      - name: Upload package artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: dist
-          path: |
-            dist/agent_plugins-*.whl
-            dist/agent_plugins-*.tar.gz
-          retention-days: 1
-          if-no-files-found: error
+  checks:
+    needs: preflight
+    uses: ./.github/workflows/ci.yml
 
   publish:
-    needs: build
+    needs: checks
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
