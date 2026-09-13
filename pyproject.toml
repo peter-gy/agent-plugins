@@ -10,7 +10,7 @@ authors = [
 ]
 requires-python = ">=3.10,<3.15"
 dependencies = [
-    "tomli==2.3.1; python_version < '3.11'",
+    "tomli>=1.0.3; python_version < '3.11'",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.10",
@@ -31,7 +31,7 @@ agent-plugins = "agent_plugins._cli:main"
 
 [build-system]
 requires = [
-    "tomli==2.3.1; python_version < '3.11'",
+    "tomli>=1.0.3; python_version < '3.11'",
     "uv_build==0.12.2",
 ]
 build-backend = "agent_plugins.build.uv_build"
