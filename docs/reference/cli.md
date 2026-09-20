@@ -33,14 +33,16 @@ agent-plugins read DISTRIBUTION [--skill NAME]
 `DISTRIBUTION` is an installed Python distribution name. Human output is a
 Markdown briefing containing:
 
-- Python distribution and plugin manifest metadata
+- Python distribution and plugin manifest metadata, interpreter path, and
+  declared `Documentation` and `Documentation Index` URLs
 - the bounded selected plugin file tree and installed root
 - client extension names and manifest validation issues
 - MCP server names and transport types, with configured commands, arguments,
   environment values, URLs, and headers excluded
 - the complete `SKILL.md` source for every packaged Agent Skill by default
 
-The generated introduction explains relative resource paths. Skill source
+The generated introduction explains environment ownership and relative resource
+paths, including the disposable tool environment used by `uvx`. Skill source
 remains complete. The inventory uses the standard tree bounds of four levels
 and 100 files, and reports omitted depth or file counts. Inspect the printed
 installed root when a skill routes to a resource outside that view.
@@ -59,6 +61,13 @@ The package requirement after `--with` and the final distribution argument are
 separate inputs. uv installs the requirement into the temporary command
 environment. `read` selects that installed distribution through Python
 metadata.
+
+To inspect an existing project or notebook installation, run
+`python -m agent_plugins read my-package` with that environment's interpreter.
+Its paths and package version may differ from the isolated tool environment.
+Use [`ap.read()`](./python-api#read-a-briefing) inside a Python execution host.
+The Python API defaults to the same-name skill, while the CLI defaults to all
+skills.
 
 ## `agent-plugins plan`
 

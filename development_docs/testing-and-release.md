@@ -52,6 +52,7 @@ The distribution verifier:
 | Build-plan selection and CLI JSON | `tests/test_plan.py` |
 | Public wheel attachment, preservation, validation, signatures, and `RECORD` | `tests/test_wheel.py` |
 | CLI read and attachment output, warnings, and exit statuses | `tests/test_cli.py` |
+| Python briefings, skill selection, CLI parity, and module help | `tests/test_read.py` |
 | Backend parity, sdist rebuilds, editable markers, and sdist modes | `tests/test_build_backends.py` |
 | Installed distribution discovery and marker failures | `tests/test_discovery.py` |
 | Project-selected plugin inventory, paths, display, named skills | `tests/test_plugin.py` |

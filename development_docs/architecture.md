@@ -67,7 +67,7 @@ other source → supplied BuildPlan           │          │          │
 
 ## Dependency direction
 
-The public `agent_plugins` package re-exports build planning, wheel attachment, discovery, filesystem, schema-value, and diagnostic types. `agent_plugins.build` separately exports the low-level `BuildBackend`.
+The public `agent_plugins` package re-exports build planning, wheel attachment, discovery, briefing rendering, filesystem, schema-value, and diagnostic types. `agent_plugins.build` separately exports the low-level `BuildBackend`.
 
 Artifact operations depend on plan validation and archive writers. Archive writers depend on plan values and the marker codec. Runtime discovery depends on the marker codec and file inventory. Project inspection composes build planning with the same inventory model.
 
@@ -75,6 +75,13 @@ Versioned schema loaders produce normalized values. Stdio resolution consumes th
 
 The CLI parses input, calls domain functions, and writes their rendered output.
 Core modules do not depend on terminal state.
+
+`read()` selects one skill, defaulting to the distribution argument exactly.
+The CLI's `read` command selects every skill unless `--skill` is supplied.
+Both use `_read.py` for the same metadata, interpreter identity, environment
+guidance, documentation links, and complete skill source. Reading a briefing
+uses distribution metadata and selected files without importing the target
+package or activating a host integration.
 
 ## Public object model
 

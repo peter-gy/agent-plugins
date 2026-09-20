@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 from importlib.metadata import Distribution
 
 from ._discovery import _locate
@@ -10,6 +11,30 @@ from ._plugin import Plugin
 from ._schema.errors import ValidationIssue, format_location
 from ._schema.models import Author
 from ._skill import Skill
+
+
+def read(distribution_name: str, *, skill: str | None = None) -> str:
+    """Return a Markdown briefing for one installed Agent Skill.
+
+    Args:
+        distribution_name: Python distribution to inspect in this interpreter.
+        skill: Structural skill name. Omitted or None uses distribution_name
+            exactly, including its spelling.
+
+    The briefing includes package metadata, environment and resource guidance,
+    a bounded plugin inventory, and the complete selected skill source. It
+    returns text without printing, importing the target package, or activating
+    its components.
+
+    Raises:
+        AgentPluginError: The distribution, plugin, or selected skill is
+            unavailable or unusable.
+        ValidationError: A selected plugin document is invalid.
+    """
+    return render_read(
+        distribution_name,
+        skill_name=distribution_name if skill is None else skill,
+    )
 
 
 def render_read(distribution_name: str, *, skill_name: str | None = None) -> str:
@@ -30,6 +55,7 @@ def _markdown(
         f"# Agent Plugin: {_code(manifest.name)}",
         "",
         f"Python distribution: {_code(f'{distribution_name}=={distribution.version}')}",
+        f"Python interpreter: {_code(sys.executable)}",
         f"Installed root: {_code(str(plugin.path))}",
     ]
     summary = distribution.metadata["Summary"]
@@ -47,6 +73,18 @@ def _markdown(
         lines.append(f"Homepage: {_one_line(manifest.homepage)}")
     if manifest.repository:
         lines.append(f"Repository: {_one_line(manifest.repository)}")
+    for project_url in distribution.metadata.get_all("Project-URL") or ():
+        label, separator, url = project_url.partition(",")
+        if (
+            separator
+            and url.strip()
+            and label.strip().casefold()
+            in {
+                "documentation",
+                "documentation index",
+            }
+        ):
+            lines.append(f"{_one_line(label)}: {_one_line(url)}")
     if manifest.license:
         lines.append(f"License: {_one_line(manifest.license)}")
     if manifest.keywords:
@@ -58,6 +96,23 @@ def _markdown(
         (
             "",
             (
+                "This briefing describes the installation in the Python environment "
+                "shown here. Resource paths belong to that environment. If invoked "
+                "through uvx, the package is in an isolated, disposable tool "
+                "environment, not installed into your project or notebook. Cached "
+                "paths may remain readable locally but may be inaccessible from "
+                "another execution host."
+            ),
+            "",
+            (
+                "Before running package code in another environment, read the "
+                "briefing from that installation. Reuse loaded instructions while "
+                "the environment and installation remain unchanged. The host owns "
+                "dependency installation and runtime connections. Reading these "
+                "instructions does not establish runtime readiness."
+            ),
+            "",
+            (
                 "Complete installed Agent Skill instructions follow. Resolve relative "
                 "resource paths from each instruction file's directory."
             ),
@@ -67,8 +122,9 @@ def _markdown(
             _fenced_block(plugin.tree(), language="text"),
             "",
             (
-                "The inventory is bounded. Inspect the installed root shown above when "
-                "a skill routes to a deeper resource."
+                "The inventory is bounded. Resolve linked resources through "
+                "agent_plugins.locate() in the owning Python environment, or read "
+                "them beneath the installed root when its filesystem is accessible."
             ),
         )
     )

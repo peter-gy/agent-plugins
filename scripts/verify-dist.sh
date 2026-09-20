@@ -59,6 +59,7 @@ expected_files = {
     "skills/agent-plugins/agents/openai.yaml",
     "skills/package-agent-plugin/SKILL.md",
     "skills/package-agent-plugin/agents/openai.yaml",
+    "skills/package-agent-plugin/references/briefings.md",
     "skills/package-agent-plugin/references/build-variants.md",
     "skills/package-agent-plugin/references/verify-artifacts.md",
 }
@@ -122,6 +123,8 @@ selected = subprocess.run(
 assert skill.source in selected.stdout
 assert package_skill.source not in selected.stdout
 assert selected.stderr == ""
+assert ap.read("agent-plugins") == selected.stdout
+assert package_skill.source in ap.read("agent-plugins", skill="package-agent-plugin")
 PY
 }
 
