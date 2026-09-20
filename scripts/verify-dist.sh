@@ -49,11 +49,18 @@ skill = plugin.skills[0]
 source_skill = source_plugin.skill("agent-plugins")
 assert plugin.skill("agent-plugins") is skill
 assert source_skill.source == skill.source
+package_skill = plugin.skill("package-agent-plugin")
+source_package_skill = source_plugin.skill("package-agent-plugin")
+assert source_package_skill.source == package_skill.source
 
 expected_files = {
     "plugin.json",
     "skills/agent-plugins/SKILL.md",
     "skills/agent-plugins/agents/openai.yaml",
+    "skills/package-agent-plugin/SKILL.md",
+    "skills/package-agent-plugin/agents/openai.yaml",
+    "skills/package-agent-plugin/references/build-variants.md",
+    "skills/package-agent-plugin/references/verify-artifacts.md",
 }
 installed_files = {
     path.relative_to(plugin.path).as_posix() for path in plugin.files
@@ -80,7 +87,41 @@ listed = subprocess.run(
 records = json.loads(listed.stdout)
 record = next(item for item in records if item["distribution"] == "agent-plugins")
 assert Path(record["root"]).resolve() == plugin.path
-assert record["skills"] == [str(skill / "SKILL.md")]
+assert record["skills"] == [
+    str(skill / "SKILL.md"),
+    str(package_skill / "SKILL.md"),
+]
+
+read = subprocess.run(
+    ["agent-plugins", "read", "agent-plugins"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert f"Python distribution: `agent-plugins=={expected_version}`" in read.stdout
+assert f"Installed root: `{plugin.path}`" in read.stdout
+assert skill.source in read.stdout
+assert package_skill.source in read.stdout
+assert read.stderr == ""
+
+shortcut = subprocess.run(
+    ["agent-plugins"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert shortcut.stdout == read.stdout
+assert shortcut.stderr == ""
+
+selected = subprocess.run(
+    ["agent-plugins", "read", "agent-plugins", "--skill", "agent-plugins"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert skill.source in selected.stdout
+assert package_skill.source not in selected.stdout
+assert selected.stderr == ""
 PY
 }
 
@@ -217,6 +258,7 @@ uv run --no-project --isolated --no-cache \
 	--with "$attached_wheel" \
 	python - "$attachment_dir" <<'PY'
 from pathlib import Path
+import subprocess
 import sys
 
 import agent_plugins as ap
@@ -234,6 +276,7 @@ assert {
     "skills/critique/SKILL.md",
 }
 core = plugin.skill("core")
+critique = plugin.skill("critique")
 assert core.source.startswith("---\n")
 assert core.file("references/querying.md").read_text(
     encoding="utf-8"
@@ -247,6 +290,29 @@ assert launch.command == str((plugin.path / "bin" / "server").resolve())
 assert launch.args == ("mcp", "--data", str(data_dir.resolve()))
 assert launch.env["PLUGIN_ROOT"] == str(plugin.path)
 assert launch.env["PLUGIN_DATA"] == str(data_dir.resolve())
+
+read = subprocess.run(
+    ["agent-plugins", "read", "attachment-smoke"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert "Python distribution: `attachment-smoke==1.0.0`" in read.stdout
+assert "# Agent Plugin: `fixture-plugin`" in read.stdout
+assert "- `fixture` (`stdio`)" in read.stdout
+assert core.source in read.stdout
+assert critique.source in read.stdout
+assert read.stderr == ""
+
+selected = subprocess.run(
+    ["agent-plugins", "read", "attachment-smoke", "--skill", "core"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert core.source in selected.stdout
+assert critique.source not in selected.stdout
+assert selected.stderr == ""
 PY
 
 verify_install --with-editable "$root"

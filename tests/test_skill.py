@@ -67,6 +67,7 @@ def test_skill_tree_drives_text_and_notebook_display(tmp_path: Path) -> None:
 def test_skill_lazily_splits_and_caches_its_source_text(tmp_path: Path) -> None:
     root = _skill_root(tmp_path)
     skill = ap.Skill(root)
+    assert skill.name == root.name
 
     skill.tree()
     _write_skill(

@@ -27,6 +27,19 @@
 
 The [Agent Plugins format](https://agent-plugins.org/) defines the directory: a manifest, [Agent Skills](https://agentskills.io/specification) for instructions and resources, [Model Context Protocol (MCP)](https://modelcontextprotocol.io/specification) server configuration for tools, and client extensions. This library packages that directory and makes it discoverable through Python metadata. Agent clients choose which components to activate.
 
+## Read the bundled guidance
+
+Run `agent-plugins` without arguments to read its own installed plugin:
+
+```console
+uvx agent-plugins
+```
+
+The output contains two version-matched skills. `agent-plugins` explains how to
+read instructions from Python packages that already ship an Agent Plugin.
+`package-agent-plugin` explains how to add Agent Plugin packaging to a Python
+project.
+
 ## Package your plugin
 
 Keep `plugin.json` and `skills/` beside your code. For a project using the [uv build backend](https://docs.astral.sh/uv/concepts/build-backend/), configure `pyproject.toml`:
@@ -56,20 +69,27 @@ Attachment updates the wheel in place. Pass `--output-dir` to preserve the input
 
 ## Inspect an installed plugin
 
-Install `agent-plugins` in the environment you want to inspect. The package includes its own Agent Skill:
+Load the complete version-matched guidance shipped by a package:
 
 ```console
-pip install agent-plugins
+uvx --with my-package agent-plugins read my-package
 ```
+
+The first `my-package` tells uv which distribution to install. The second
+identifies the installed Agent Plugin to read.
+
+Use the Python API when the package is already installed in the current
+environment:
 
 ```python
 import agent_plugins as ap
 
 plugin = ap.locate("agent-plugins")
-skill = plugin.skill("agent-plugins")
+consumer_skill = plugin.skill("agent-plugins")
+packaging_skill = plugin.skill("package-agent-plugin")
 
-print(skill.source)
-print(skill.file("SKILL.md"))
+print(consumer_skill.source)
+print(packaging_skill.source)
 ```
 
 Pass your library's distribution name to `locate()` to inspect its plugin. Use [`Plugin.from_project()`](https://peter-gy.github.io/agent-plugins/guide/inspect-project) to inspect the selected source files before building.

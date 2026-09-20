@@ -52,7 +52,7 @@ other source → supplied BuildPlan           │          │          │
 | `build/hatchling.py` | Public Hatchling adapter module |
 | `_marker.py` | Encode and decode `agent_plugins.json` |
 | `_discovery.py` | Resolve markers through `importlib.metadata` |
-| `_files.py` | Own resolved roots, validated relative names, subtree inventories, and selected-file lookup |
+| `_files.py` | Own resolved roots, validated relative names, single-pass immediate subtree inventories, and selected-file lookup |
 | `_plugin.py` | Construct project-selected handles and compose named manifest, MCP, and skill access around one inventory |
 | `_skill.py` | Expose exact skill source, checked selected files, native joins, and tree rendering |
 | `_schema/manifest.py` | Dispatch and cache manifest validation |
@@ -62,7 +62,8 @@ other source → supplied BuildPlan           │          │          │
 | `_schema/skill.py` | Split UTF-8 `SKILL.md` source at exact delimiters |
 | `_schema/v1/` | Validate Agent Plugins 1.0.0 documents |
 | `_tree.py` | Render bounded deterministic ASCII trees |
-| `_cli.py` | Parse commands and render human or JSON output |
+| `_read.py` | Compose installed distribution and plugin metadata into Markdown briefings |
+| `_cli.py` | Parse commands, call domain operations, and write human or JSON output |
 
 ## Dependency direction
 
@@ -72,11 +73,15 @@ Artifact operations depend on plan validation and archive writers. Archive write
 
 Versioned schema loaders produce normalized values. Stdio resolution consumes those values and the selected inventory, independently of JSON parsing. `MCPConfig` composes cached document access with uncached launch preparation. Schema loaders and launch preparation do not depend on build or discovery code.
 
-The CLI parses input, calls public-domain functions, and renders output. Core modules do not depend on terminal state.
+The CLI parses input, calls domain functions, and writes their rendered output.
+Core modules do not depend on terminal state.
 
 ## Public object model
 
-`Plugin` and `Skill` are slotted filesystem handles. Their equality and hash use the resolved root and selected relative filenames. Parsed document content does not participate.
+`Plugin` and `Skill` are slotted filesystem handles. Plugin equality and hashing
+use the resolved root and selected relative filenames. Skill equality and
+hashing also include its structural directory name. Parsed document content
+does not participate.
 
 `Manifest` and `MCPConfig` are lazy document handles. `Author`, MCP server values, `ResolvedStdioServer`, `ValidationIssue`, `BuildPlan`, `FileMapping`, and `WheelAttachment` are frozen values.
 

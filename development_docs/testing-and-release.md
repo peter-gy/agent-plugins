@@ -13,6 +13,8 @@ uv run ruff check src tests
 uv run ty check
 uv run pyrefly check
 uv run pytest -q
+uvx --from skills-ref==0.1.1 agentskills validate skills/agent-plugins
+uvx --from skills-ref==0.1.1 agentskills validate skills/package-agent-plugin
 ./scripts/build-dist.sh
 pnpm --dir docs install --frozen-lockfile
 pnpm --dir docs typecheck
@@ -38,7 +40,8 @@ The distribution verifier:
 1. Requires one wheel and one `.tar.gz` source distribution.
 2. Rebuilds a wheel from the source distribution.
 3. Installs the direct and rebuilt wheels in isolated targets.
-4. Verifies plugin file bytes, discovery, manifest access, skill access, CLI `locate`, and CLI `list --json`.
+4. Verifies plugin file bytes, discovery, manifest access, skill access, CLI
+   `locate`, CLI `list --json`, CLI `read`, and the no-argument shortcut.
 5. Creates an editable installation and checks that discovery resolves the authored root.
 6. Uses the installed Python API and CLI to attach a synthetic external wheel, installs it, and verifies discovery.
 
@@ -48,7 +51,7 @@ The distribution verifier:
 | --- | --- |
 | Build-plan selection and CLI JSON | `tests/test_plan.py` |
 | Public wheel attachment, preservation, validation, signatures, and `RECORD` | `tests/test_wheel.py` |
-| CLI attachment output, warnings, and exit statuses | `tests/test_cli.py` |
+| CLI read and attachment output, warnings, and exit statuses | `tests/test_cli.py` |
 | Backend parity, sdist rebuilds, editable markers, and sdist modes | `tests/test_build_backends.py` |
 | Installed distribution discovery and marker failures | `tests/test_discovery.py` |
 | Project-selected plugin inventory, paths, display, named skills | `tests/test_plugin.py` |

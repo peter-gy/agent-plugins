@@ -9,13 +9,11 @@ An [Agent Plugin](https://agent-plugins.org/) is a directory with a `plugin.json
 
 `agent-plugins` packages that directory with a Python library. An agent that can execute Python can read the library's packaged instructions, then compose calls to its API for a task. The same workflow applies to a short script, an interactive session, or a notebook.
 
-With `agent-plugins` [installed](/guide/inspect-installed), read its own packaged skill:
+Read the package's consumer and repository-integration guidance in a temporary
+environment:
 
-```python
-import agent_plugins as ap
-
-plugin = ap.locate("agent-plugins")
-print(plugin.skill("agent-plugins").source)
+```console
+uvx agent-plugins
 ```
 
 An **agent client** is the application hosting the model and its execution tools. It decides which instructions to load and which components to activate. The Python API supplies files, text, validated configuration, and subprocess inputs for that integration.

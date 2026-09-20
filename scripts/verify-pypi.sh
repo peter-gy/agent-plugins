@@ -35,13 +35,13 @@ assert dist.version == os.environ["RELEASE_VERSION"]
 plugin = ap.locate("agent-plugins")
 assert plugin.manifest.name == "agent-plugins"
 assert plugin.manifest.issues == ()
-assert len(plugin.skills) == 1
+assert len(plugin.skills) == 2
 
-skill = plugin.skills[0]
-assert skill.path.name == "agent-plugins"
-assert (skill / "SKILL.md").is_file()
-assert (skill / "agents/openai.yaml").is_file()
-assert skill.frontmatter.startswith("name: agent-plugins\n")
+for name in ("agent-plugins", "package-agent-plugin"):
+    skill = plugin.skill(name)
+    assert (skill / "SKILL.md").is_file()
+    assert (skill / "agents/openai.yaml").is_file()
+    assert skill.frontmatter.startswith(f"name: {name}\n")
 
 located = subprocess.run(
     ["agent-plugins", "locate", "agent-plugins"],
@@ -50,6 +50,22 @@ located = subprocess.run(
     text=True,
 )
 assert Path(located.stdout.strip()).resolve() == plugin.path
+
+read = subprocess.run(
+    ["agent-plugins", "read", "agent-plugins"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+shortcut = subprocess.run(
+    ["agent-plugins"],
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert shortcut.stdout == read.stdout
+assert "## Agent Skill: `agent-plugins`" in read.stdout
+assert "## Agent Skill: `package-agent-plugin`" in read.stdout
 PY
 }
 

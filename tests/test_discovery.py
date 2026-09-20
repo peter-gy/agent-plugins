@@ -153,8 +153,10 @@ def test_locate_preserves_structural_name_for_contained_skill_alias(
     plugin = ap.locate("demo-provider")
     skill = plugin.skill("alias")
 
+    assert skill.name == "alias"
     assert skill.path == target.resolve()
     assert skill.file("SKILL.md") == instructions.resolve()
+    assert skill != ap.Skill(target)
 
 
 def test_locate_command_prints_the_absolute_root_path(

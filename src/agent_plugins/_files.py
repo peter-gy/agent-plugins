@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from ._errors import AgentPluginError
@@ -16,6 +16,10 @@ class FileInventory:
 
     root: Path
     names: tuple[PurePosixPath, ...]
+    _name_set: frozenset[PurePosixPath] = field(init=False, repr=False, compare=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "_name_set", frozenset(self.names))
 
     @classmethod
     def discover(
@@ -53,33 +57,39 @@ class FileInventory:
             names=_validate_names(root, names, required=required, kind=kind),
         )
 
-    def subtree(self, path: str | PurePosixPath) -> FileInventory:
-        """Return the selected files below one relative directory."""
-        relative = PurePosixPath(path)
-        if (
-            relative.is_absolute()
-            or relative == PurePosixPath(".")
-            or ".." in relative.parts
-        ):
-            raise ValueError(f"Invalid inventory subtree: {path}")
-        candidate = self.root.joinpath(*relative.parts)
-        try:
-            root = candidate.resolve(strict=True)
-            root.relative_to(self.root)
-        except (OSError, RuntimeError, ValueError) as error:
-            raise AgentPluginError(
-                f"Inventory subtree cannot be resolved: {candidate}"
-            ) from error
-        if not root.is_dir():
-            raise AgentPluginError(f"Inventory subtree is not a directory: {candidate}")
-        return type(self)(
-            root=root,
-            names=tuple(
-                name.relative_to(relative)
-                for name in self.names
-                if name.is_relative_to(relative)
-            ),
-        )
+    def immediate_subtrees(
+        self,
+        path: str | PurePosixPath,
+        *,
+        required: str,
+    ) -> tuple[tuple[str, FileInventory], ...]:
+        """Return immediate selected subtrees containing `required`."""
+        parent = PurePosixPath(path)
+        if parent.is_absolute() or parent == PurePosixPath(".") or ".." in parent.parts:
+            raise ValueError(f"Invalid inventory subtree parent: {path}")
+
+        grouped: dict[str, list[PurePosixPath]] = {}
+        parent_parts = parent.parts
+        parent_size = len(parent.parts)
+        for name in self.names:
+            parts = name.parts
+            if len(parts) <= parent_size or parts[:parent_size] != parent_parts:
+                continue
+            child = parts[parent_size]
+            grouped.setdefault(child, []).append(
+                PurePosixPath(*parts[parent_size + 1 :])
+            )
+
+        required_path = PurePosixPath(required)
+        entries: list[tuple[str, FileInventory]] = []
+        for child in sorted(grouped, key=lambda value: (value.casefold(), value)):
+            names = tuple(grouped[child])
+            if required_path not in names:
+                continue
+            child_root = parent / child
+            root = _resolve_subtree(self.root, child_root)
+            entries.append((child, type(self)(root=root, names=names)))
+        return tuple(entries)
 
     def paths(self) -> tuple[Path, ...]:
         """Return absolute paths for the selected files."""
@@ -99,7 +109,7 @@ class FileInventory:
                 f"Invalid {kind} file path under {self.root}: {os.fspath(path)!r}"
             ) from error
         value = relative.as_posix()
-        if relative not in self.names:
+        if relative not in self._name_set:
             raise AgentPluginError(
                 f"{kind} file is not selected under {self.root}: {value}"
             )
@@ -137,6 +147,20 @@ def _resolve_root(
     if not root.is_dir():
         raise AgentPluginError(f"{kind} root is invalid: {root}")
     return root
+
+
+def _resolve_subtree(root: Path, relative: PurePosixPath) -> Path:
+    candidate = root.joinpath(*relative.parts)
+    try:
+        resolved = candidate.resolve(strict=True)
+        resolved.relative_to(root)
+    except (OSError, RuntimeError, ValueError) as error:
+        raise AgentPluginError(
+            f"Inventory subtree cannot be resolved: {candidate}"
+        ) from error
+    if not resolved.is_dir():
+        raise AgentPluginError(f"Inventory subtree is not a directory: {candidate}")
+    return resolved
 
 
 def _validate_names(

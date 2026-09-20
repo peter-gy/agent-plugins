@@ -1,4 +1,4 @@
 interface:
-  display_name: "Agent Plugins"
-  short_description: "Ship agent components with Python packages"
-  default_prompt: "Use $agent-plugins to ship agent skills and MCP configuration with this Python package."
+  display_name: "Read Agent Plugins"
+  short_description: "Load packaged instructions from Python distributions"
+  default_prompt: "Use $agent-plugins to read the version-matched instructions packaged with this Python distribution."

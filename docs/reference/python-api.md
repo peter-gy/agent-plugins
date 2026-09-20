@@ -11,12 +11,13 @@ Import the top-level API as `agent_plugins`:
 import agent_plugins as ap
 ```
 
-The installed `agent-plugins` distribution includes a skill you can inspect:
+The installed `agent-plugins` distribution includes separate consumer and
+packaging skills:
 
 ```python
 plugin = ap.locate("agent-plugins")
-skill = plugin.skill("agent-plugins")
-print(skill.source)
+print(plugin.skill("agent-plugins").source)
+print(plugin.skill("package-agent-plugin").source)
 ```
 
 The distribution supports Python 3.10 through 3.14 and ships a `py.typed` marker.
@@ -230,6 +231,7 @@ Raises `AgentPluginError` when the root cannot be resolved, is not a directory, 
 
 | Property | Type | Behavior |
 | --- | --- | --- |
+| `name` | `str` | Structural directory name used by `plugin.skill(name)` |
 | `path` | `Path` | Resolved absolute skill root |
 | `files` | `tuple[Path, ...]` | Absolute paths in the selected skill inventory |
 | `frontmatter` | `str` | Raw text between the `---` delimiter lines |
@@ -254,7 +256,9 @@ skill / "references" / "api.md"
 
 The `/` operator delegates to ordinary unchecked `pathlib.Path` joining. Use `skill.file()` when selection and containment are required.
 
-`Skill.tree()`, native path conversion, display, equality, and hashing follow the `Plugin` contracts.
+`Skill.tree()`, native path conversion, and display follow the `Plugin`
+contracts. Two `Skill` handles compare equal and have the same hash when their
+structural names, resolved roots, and selected relative filenames match.
 
 ## `Manifest`
 
