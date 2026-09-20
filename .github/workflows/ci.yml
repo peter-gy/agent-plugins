@@ -72,6 +72,8 @@ jobs:
           uv run ruff format --check src tests
           uv run ruff check src tests
           uvx --from actionlint-py==1.7.12.24 actionlint .github/workflows/*.yml
+          uvx --from skills-ref==0.1.1 agentskills validate skills/agent-plugins
+          uvx --from skills-ref==0.1.1 agentskills validate skills/package-agent-plugin
           shellcheck scripts/*.sh
 
       - name: Type-check

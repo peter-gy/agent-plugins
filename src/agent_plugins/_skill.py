@@ -17,10 +17,11 @@ _INSTRUCTIONS = "SKILL.md"
 class Skill:
     """Expose an Agent Skill directory through native paths and source text."""
 
-    __slots__ = ("_document", "_inventory")
+    __slots__ = ("_document", "_inventory", "_name")
 
     _inventory: FileInventory
     _document: SkillDocument
+    _name: str
 
     def __init__(self, path: str | os.PathLike[str]) -> None:
         """Create a skill from a directory containing `SKILL.md`."""
@@ -29,15 +30,24 @@ class Skill:
             kind=_KIND,
             required=_INSTRUCTIONS,
         )
-        _set_state(self, inventory)
+        _set_state(self, inventory, name=inventory.root.name)
 
     @classmethod
     def _from_inventory(
-        cls, inventory: FileInventory, *, document: SkillDocument | None = None
+        cls,
+        inventory: FileInventory,
+        *,
+        name: str,
+        document: SkillDocument | None = None,
     ) -> Skill:
         skill = object.__new__(cls)
-        _set_state(skill, inventory, document=document)
+        _set_state(skill, inventory, name=name, document=document)
         return skill
+
+    @property
+    def name(self) -> str:
+        """Return the structural skill directory name."""
+        return self._name
 
     @property
     def path(self) -> Path:
@@ -112,19 +122,25 @@ class Skill:
         return f"<pre>{escape(self.tree())}</pre>"
 
     def __eq__(self, other: object) -> bool:
-        """Return whether two skill handles select the same files."""
-        return type(other) is type(self) and other._inventory == self._inventory
+        """Return whether two skill handles have the same name and files."""
+        return (
+            type(other) is type(self)
+            and other._name == self._name
+            and other._inventory == self._inventory
+        )
 
     def __hash__(self) -> int:
-        """Return a hash of the selected skill files."""
-        return hash(self._inventory)
+        """Return a hash of the structural name and selected files."""
+        return hash((self._name, self._inventory))
 
 
 def _set_state(
     skill: Skill,
     inventory: FileInventory,
     *,
+    name: str,
     document: SkillDocument | None = None,
 ) -> None:
+    skill._name = name
     skill._inventory = inventory
     skill._document = document if document is not None else SkillDocument(inventory)

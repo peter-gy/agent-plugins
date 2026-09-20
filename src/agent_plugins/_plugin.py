@@ -21,13 +21,13 @@ _MANIFEST = "plugin.json"
 class Plugin:
     """Expose an Agent Plugin through native paths and a tree display."""
 
-    __slots__ = ("_inventory", "_manifest", "_mcp", "_skill_names", "_skills")
+    __slots__ = ("_inventory", "_manifest", "_mcp", "_skills", "_skills_by_name")
 
     _inventory: FileInventory
     _manifest: Manifest
     _mcp: MCPConfig | None
-    _skill_names: tuple[str, ...]
     _skills: tuple[Skill, ...]
+    _skills_by_name: dict[str, Skill]
 
     def __init__(self, path: str | os.PathLike[str]) -> None:
         """Create a plugin from a directory containing `plugin.json`."""
@@ -90,23 +90,13 @@ class Plugin:
         ):
             raise AgentPluginError(f"Invalid Agent Skill directory name: {name!r}")
 
-        matches = tuple(
-            skill
-            for skill_name, skill in zip(self._skill_names, self._skills, strict=True)
-            if skill_name == name
-        )
-        available = tuple(
-            sorted(
-                self._skill_names,
-                key=lambda value: (value.casefold(), value),
-            )
-        )
-        if not matches:
-            choices = ", ".join(available) if available else "none"
+        skill = self._skills_by_name.get(name)
+        if skill is None:
+            choices = ", ".join(self._skills_by_name) or "none"
             raise AgentPluginError(
                 f"Agent Skill {name!r} is unavailable. Available skills: {choices}"
             )
-        return matches[0]
+        return skill
 
     @property
     def mcp(self) -> MCPConfig | None:
@@ -174,26 +164,16 @@ def _set_state(
     )
     plugin._manifest = manifest
     plugin._mcp = mcp
-    entries = _skills(inventory)
-    plugin._skill_names = tuple(name for name, _skill in entries)
-    plugin._skills = tuple(skill for _name, skill in entries)
+    plugin._skills = _skills(inventory)
+    plugin._skills_by_name = {skill.name: skill for skill in plugin._skills}
 
 
-def _skills(inventory: FileInventory) -> tuple[tuple[str, Skill], ...]:
-    skill_roots = (
-        relative.parent
-        for relative in inventory.names
-        if len(relative.parts) == 3
-        and relative.parts[0] == "skills"
-        and relative.name == "SKILL.md"
-    )
+def _skills(inventory: FileInventory) -> tuple[Skill, ...]:
     return tuple(
-        (
-            skill_root.name,
-            Skill._from_inventory(
-                inventory.subtree(skill_root),
-                document=SkillDocument(inventory, (skill_root / "SKILL.md").as_posix()),
-            ),
+        Skill._from_inventory(
+            subtree,
+            name=name,
+            document=SkillDocument(inventory, f"skills/{name}/SKILL.md"),
         )
-        for skill_root in skill_roots
+        for name, subtree in inventory.immediate_subtrees("skills", required="SKILL.md")
     )

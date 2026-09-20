@@ -5,11 +5,23 @@ description: Locate Agent Plugins by Python distribution name and inspect their 
 
 # Inspect installed Agent Plugins
 
-Use `locate()` to read the Agent Plugin shipped with an installed Python library. Install `agent-plugins` in the same environment as that library:
+Read the guidance packaged with `agent-plugins` itself:
 
 ```console
-pip install agent-plugins
+uvx agent-plugins
 ```
+
+Read a package's complete primary agent instructions in one command:
+
+```console
+uvx --with my-project agent-plugins read my-project
+```
+
+uv installs `my-project` and `agent-plugins` in one temporary environment. The
+command prints the complete version-matched guidance carried by `my-project`.
+
+Use `locate()` when the Python library is already installed in the environment
+where the agent will work:
 
 ## Locate one distribution
 
@@ -45,7 +57,7 @@ for path in plugin.files:
     print(path)
 
 for skill in plugin.skills:
-    print(skill.path)
+    print(skill.name, skill.path)
 
 if plugin.mcp is not None:
     print(plugin.mcp.path)

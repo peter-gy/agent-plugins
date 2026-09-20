@@ -25,11 +25,12 @@ class ValidationError(AgentPluginError):
         self.path = path
         self.issues = issues
         issue = issues[0]
-        location = _format_location(issue.location)
+        location = format_location(issue.location)
         super().__init__(f"{path}: {location}: {issue.message}")
 
 
-def _format_location(location: tuple[str | int, ...]) -> str:
+def format_location(location: tuple[str | int, ...]) -> str:
+    """Return a JSONPath-like validation issue location."""
     if not location:
         return "$"
     return "$" + "".join(

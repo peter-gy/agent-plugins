@@ -1,17 +1,64 @@
 ---
 title: CLI reference
-description: Reference agent-plugins plan, attach-wheel, locate, and list commands, output formats, and exit statuses.
+description: Reference agent-plugins read, plan, attach-wheel, locate, and list commands, output formats, and exit statuses.
 ---
 
 # CLI reference
 
-The `agent-plugins` command previews package file selection, attaches Agent Plugins to wheels, and locates plugins visible in the current Python environment.
+The `agent-plugins` command reads installed plugin instructions, previews package
+file selection, attaches Agent Plugins to wheels, and locates plugins visible in
+the current Python environment.
 
 ```text
-agent-plugins {plan,attach-wheel,locate,list} ...
+agent-plugins
+agent-plugins {read,plan,attach-wheel,locate,list} ...
 ```
 
 `python -m agent_plugins` runs the same entry point.
+
+With no arguments, `agent-plugins` reads the plugin installed with its own
+distribution. These commands produce the same stdout:
+
+```console
+uvx agent-plugins
+uvx agent-plugins read agent-plugins
+```
+
+## `agent-plugins read`
+
+```text
+agent-plugins read DISTRIBUTION [--skill NAME]
+```
+
+`DISTRIBUTION` is an installed Python distribution name. Human output is a
+Markdown briefing containing:
+
+- Python distribution and plugin manifest metadata
+- the bounded selected plugin file tree and installed root
+- client extension names and manifest validation issues
+- MCP server names and transport types, with configured commands, arguments,
+  environment values, URLs, and headers excluded
+- the complete `SKILL.md` source for every packaged Agent Skill by default
+
+The generated introduction explains relative resource paths. Skill source
+remains complete. The inventory uses the standard tree bounds of four levels
+and 100 files, and reports omitted depth or file counts. Inspect the printed
+installed root when a skill routes to a resource outside that view.
+
+`--skill NAME` prints one structurally named skill while retaining the package
+metadata, bounded inventory, extension names, and MCP summary. An unavailable
+name reports the sorted available skills on stderr.
+
+Use uv to read a package without adding it to the current project:
+
+```console
+uvx --with my-package agent-plugins read my-package
+```
+
+The package requirement after `--with` and the final distribution argument are
+separate inputs. uv installs the requirement into the temporary command
+environment. `read` selects that installed distribution through Python
+metadata.
 
 ## `agent-plugins plan`
 

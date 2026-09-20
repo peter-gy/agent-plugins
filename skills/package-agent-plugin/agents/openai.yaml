@@ -1,0 +1,4 @@
+interface:
+  display_name: "Package an Agent Plugin"
+  short_description: "Add Agent Plugin packaging to a Python project"
+  default_prompt: "Use $package-agent-plugin to add version-matched agent instructions to this Python package."

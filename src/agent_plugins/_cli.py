@@ -12,19 +12,25 @@ from ._build.plan import BuildPlan, build_plan
 from ._build.wheel import WheelAttachment, attach_wheel
 from ._discovery import installed, locate
 from ._errors import AgentPluginError
+from ._read import render_read
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the Agent Plugins command-line interface."""
-    arguments = _parser().parse_args(argv)
+    values = tuple(sys.argv[1:] if argv is None else argv)
+    arguments = _parser().parse_args(values or ("read", "agent-plugins"))
     try:
         if arguments.command == "list":
             _list_plugins(as_json=arguments.json)
         elif arguments.command == "locate":
             print(locate(arguments.distribution).path)
+        elif arguments.command == "read":
+            sys.stdout.write(
+                render_read(arguments.distribution, skill_name=arguments.skill)
+            )
         elif arguments.command == "plan":
             _print_plan(build_plan(arguments.project), as_json=arguments.json)
-        else:
+        elif arguments.command == "attach-wheel":
             result = attach_wheel(
                 arguments.wheel,
                 project=arguments.project,
@@ -37,6 +43,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                     f"{signature.as_posix()}",
                     file=sys.stderr,
                 )
+        else:  # pragma: no cover - argparse owns the command choices
+            raise AssertionError(f"Unexpected command: {arguments.command!r}")
     except AgentPluginError as error:
         print(f"agent-plugins: error: {error}", file=sys.stderr)
         return 1
@@ -46,7 +54,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="agent-plugins",
-        description="Package and inspect Agent Plugins in Python distributions.",
+        description="Read, package, and inspect Agent Plugins in Python distributions.",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -62,6 +70,15 @@ def _parser() -> argparse.ArgumentParser:
     )
     locate_parser.add_argument(
         "distribution", help="Installed Python distribution name."
+    )
+
+    read_parser = commands.add_parser(
+        "read",
+        help="Print one installed plugin and its Agent Skill instructions.",
+    )
+    read_parser.add_argument("distribution", help="Installed Python distribution name.")
+    read_parser.add_argument(
+        "--skill", help="Print one named skill instead of every packaged skill."
     )
 
     plan_parser = commands.add_parser(

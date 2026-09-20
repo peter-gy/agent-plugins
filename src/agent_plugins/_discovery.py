@@ -18,6 +18,10 @@ def locate(distribution_name: str) -> Plugin:
     Raises:
         AgentPluginError: The distribution has no usable Agent Plugin marker.
     """
+    return _locate(distribution_name)[1]
+
+
+def _locate(distribution_name: str) -> tuple[metadata.Distribution, Plugin]:
     if not distribution_name:
         raise AgentPluginError("A distribution name is required")
 
@@ -28,7 +32,7 @@ def locate(distribution_name: str) -> Plugin:
             f"Python distribution {distribution_name!r} is not installed"
         ) from None
 
-    return _root(distribution, distribution_name)
+    return distribution, _root(distribution, distribution_name)
 
 
 def installed() -> dict[str, Plugin]:

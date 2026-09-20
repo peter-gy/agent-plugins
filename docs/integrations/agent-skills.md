@@ -47,11 +47,14 @@ plugin = ap.locate("my-project")
 skill = plugin.skill("review-records")
 
 print(skill.path)
+print(skill.name)
 print(skill.source)
 print(skill.file("references/fields.md"))
 ```
 
-`skill.files` contains absolute paths from the selected inventory below that skill root. `skill.tree()` renders the same selection as a bounded ASCII tree.
+`skill.name` is the structural directory name used by `plugin.skill(name)`.
+`skill.files` contains absolute paths from the selected inventory below that
+skill root. `skill.tree()` renders the same selection as a bounded ASCII tree.
 
 `plugin.skill(name)` selects an immediate skill by its structural directory name and reports sorted available names when the requested skill is absent.
 
