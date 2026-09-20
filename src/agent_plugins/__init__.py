@@ -5,6 +5,7 @@ from ._build.wheel import WheelAttachment, attach_wheel
 from ._discovery import installed, locate
 from ._errors import AgentPluginError
 from ._plugin import Plugin
+from ._read import read
 from ._schema import (
     Author,
     Manifest,
@@ -40,4 +41,5 @@ __all__ = [
     "build_plan",
     "installed",
     "locate",
+    "read",
 ]

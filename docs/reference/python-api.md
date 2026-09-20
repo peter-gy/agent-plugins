@@ -15,15 +15,15 @@ The installed `agent-plugins` distribution includes separate consumer and
 packaging skills:
 
 ```python
-plugin = ap.locate("agent-plugins")
-print(plugin.skill("agent-plugins").source)
-print(plugin.skill("package-agent-plugin").source)
+print(ap.read("agent-plugins"))
+print(ap.read("agent-plugins", skill="package-agent-plugin"))
 ```
 
 The distribution supports Python 3.10 through 3.14 and ships a `py.typed` marker.
 
 | Task | Entry point |
 | --- | --- |
+| Read a skill with its installed package context | [`read()`](#read-a-briefing) |
 | Preview selected package files | [`build_plan()`](#build-planning) |
 | Add a plugin to an existing wheel | [`attach_wheel()`](#wheel-attachment) |
 | Find plugins in this environment | [`locate()` and `installed()`](#installed-discovery) |
@@ -32,6 +32,37 @@ The distribution supports Python 3.10 through 3.14 and ships a `py.typed` marker
 | Inspect plugin metadata | [`Manifest`](#manifest) |
 | Inspect tool configuration and prepare a launch | [`MCPConfig`](#mcpconfig) |
 | Wrap a Python build backend | [`BuildBackend`](#buildbackend) |
+
+## Read a briefing
+
+### `read(distribution_name, *, skill=None)`
+
+```python
+def read(distribution_name: str, *, skill: str | None = None) -> str: ...
+```
+
+Returns a Markdown briefing from the current interpreter's installation. The
+briefing includes distribution and plugin metadata, the interpreter and resource
+root, environment guidance, a bounded inventory, MCP summaries, and the complete
+selected `SKILL.md` source. It also includes `Documentation` and `Documentation
+Index` URLs declared in the distribution's `Project-URL` metadata.
+
+- `distribution_name` is the installed Python distribution name.
+- `skill` is the structural skill directory name. Omitted or `None` uses
+  `distribution_name` exactly, including its spelling. An unavailable name raises
+  an error listing the available skills.
+
+The function returns text without printing, importing the target package, or
+activating its components. Raises `AgentPluginError` for an absent or unusable
+installation or unavailable skill. Invalid plugin documents raise
+`ValidationError`.
+
+The [CLI `read`](./cli#agent-plugins-read) uses the same renderer but includes all
+skills by default. Use `--skill NAME` for the equivalent single-skill output.
+
+To expose a core skill through `help(my_package.agent)`, set the optional agent
+module's `__doc__` to `ap.read("my-package")`. Read the bundled
+`package-agent-plugin` skill for the complete authoring pattern.
 
 ## Build planning
 

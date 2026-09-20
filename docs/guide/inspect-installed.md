@@ -17,11 +17,31 @@ Read a package's complete primary agent instructions in one command:
 uvx --with my-project agent-plugins read my-project
 ```
 
-uv installs `my-project` and `agent-plugins` in one temporary environment. The
-command prints the complete version-matched guidance carried by `my-project`.
+uv installs `my-project` and `agent-plugins` in an isolated tool environment.
+The command reads that installation. Its cached paths may remain readable
+locally, but the project or notebook can have a different installation or
+filesystem.
 
-Use `locate()` when the Python library is already installed in the environment
-where the agent will work:
+## Read in the execution environment
+
+When the package is already installed, read its briefing in the Python
+environment where the agent will work:
+
+```python
+import agent_plugins as ap
+
+print(ap.read("agent-plugins"))
+print(ap.read("agent-plugins", skill="package-agent-plugin"))
+```
+
+`read()` returns one skill with distribution identity, interpreter, resource
+guidance, and the plugin inventory. It defaults to the skill whose directory
+name matches the distribution argument exactly. Pass `skill=` for another
+name. The CLI includes all skills unless `--skill` is supplied.
+
+Read again when switching environments or installations. Reuse loaded
+instructions for the same installation and follow their runtime readiness
+checks. To inspect files programmatically, use `locate()`.
 
 ## Locate one distribution
 

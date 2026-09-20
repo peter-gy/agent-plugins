@@ -84,13 +84,14 @@ environment:
 ```python
 import agent_plugins as ap
 
-plugin = ap.locate("agent-plugins")
-consumer_skill = plugin.skill("agent-plugins")
-packaging_skill = plugin.skill("package-agent-plugin")
-
-print(consumer_skill.source)
-print(packaging_skill.source)
+print(ap.read("agent-plugins"))
+print(ap.read("agent-plugins", skill="package-agent-plugin"))
 ```
+
+`read()` returns a briefing for the same-name skill by default. Pass `skill=`
+for another workflow. The CLI reads all packaged skills unless `--skill` is
+provided. `uvx` uses an isolated tool environment, so read through the target
+interpreter when working with an existing installation.
 
 Pass your library's distribution name to `locate()` to inspect its plugin. Use [`Plugin.from_project()`](https://peter-gy.github.io/agent-plugins/guide/inspect-project) to inspect the selected source files before building.
 

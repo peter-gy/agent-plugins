@@ -22,6 +22,7 @@ def test_project_build_plan_includes_its_agent_plugin() -> None:
         "skills/agent-plugins/agents/openai.yaml",
         "skills/package-agent-plugin/SKILL.md",
         "skills/package-agent-plugin/agents/openai.yaml",
+        "skills/package-agent-plugin/references/briefings.md",
         "skills/package-agent-plugin/references/build-variants.md",
         "skills/package-agent-plugin/references/verify-artifacts.md",
     ]
