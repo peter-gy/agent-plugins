@@ -1,0 +1,54 @@
+skills/package-agent-plugin/references/briefings.md
+  s_f23caa51f139e7::t_4ad5ad99b4bd56 1-143
+tests/test_plan.py
+  s_f23caa51f139e7::t_ec593cf89555dc 25
+tests/test_read.py
+  s_f23caa51f139e7::t_ac6c36bbd1f590 59-65,67,71,96-102
+  s_f23caa51f139e7::t_ec593cf89555dc 1-43,46-58,66,68-70,72-95,103-122
+  s_f23caa51f139e7::t_4357052aa3eda6 44-45
+README.md
+  s_f23caa51f139e7::t_f209b18c351e89 87-88,91-94
+skills/agent-plugins/SKILL.md
+  s_f23caa51f139e7::t_4357052aa3eda6 130-132
+  s_f23caa51f139e7::t_c49fab725b8aec 3,8-11,13,15-16,18-21,24-30,33,36-38,40-43,45,47-50,52-54,57,60-64,66-68,70,72-74,80-81,84,86-88,90-94,96-98,100-129
+src/agent_plugins/_read.py
+  s_f23caa51f139e7::t_648ec02773c558 78-86
+  s_f23caa51f139e7::t_4ad5ad99b4bd56 6,16-39,58,76-77,87,97-113,125-127
+development_docs/testing-and-release.md
+  s_f23caa51f139e7::t_f209b18c351e89 55
+pyproject.toml
+  s_f23caa51f139e7::t_4357052aa3eda6 26
+development_docs/architecture.md
+  s_f23caa51f139e7::t_f209b18c351e89 70,79-84
+docs/reference/python-api.md
+  s_f23caa51f139e7::t_f209b18c351e89 18-19,26,36-65
+docs/guide/inspect-installed.md
+  s_f23caa51f139e7::t_f209b18c351e89 20-23,25-44
+scripts/verify-dist.sh
+  s_f23caa51f139e7::t_ec593cf89555dc 62,126-127
+docs/reference/cli.md
+  s_f23caa51f139e7::t_f209b18c351e89 36-37,44-45,65-70
+skills/package-agent-plugin/references/verify-artifacts.md
+  s_f23caa51f139e7::t_f209b18c351e89 24-26,39-42
+src/agent_plugins/__init__.py
+  s_f23caa51f139e7::t_4ad5ad99b4bd56 8,44
+skills/package-agent-plugin/SKILL.md
+  s_f23caa51f139e7::t_4357052aa3eda6 148-150
+  s_f23caa51f139e7::t_4ad5ad99b4bd56 3,9-26,37,53-55,57-59,104-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "82bcfbbb87bdbd73b9a8a8796a872f8f5f588116",
+  "prompts": {},
+  "sessions": {
+    "s_f23caa51f139e7": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0c007-2a69-76b1-bdae-e9b31a14e205",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Péter Ferenc Gyarmati <dev.petergy@gmail.com>"
+    }
+  }
+}
